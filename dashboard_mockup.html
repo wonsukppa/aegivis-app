@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIVIS | Smart Underground Safety Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e14;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-cyan: #00f2ff;
+            --neon-amber: #ffaa00;
+            --neon-red: #ff3c3c;
+            --text-main: #e0e0e0;
+            --text-muted: #888;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Glassmorphism Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        /* Incident Feed */
+        .feed-container {
+            flex: 1;
+            overflow-y: auto;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+
+        .incident-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: 0.3s;
+        }
+
+        .incident-card.emergency {
+            border-left: 4px solid var(--neon-red);
+            background: rgba(255, 60, 60, 0.05);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.2);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 60, 60, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 60, 60, 0);
+            }
+        }
+
+        /* Main Map Area */
+        .main-content {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at center, #1a202c 0%, #0a0e14 100%);
+        }
+
+        header {
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 24px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dot.cyan {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        .dot.amber {
+            background: var(--neon-amber);
+            box-shadow: 0 0 8px var(--neon-amber);
+        }
+
+        /* View Switcher Controls */
+        .view-switcher {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+
+        .view-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.3s;
+        }
+
+        .view-btn.active {
+            background: var(--neon-cyan);
+            color: var(--bg-dark);
+            font-weight: 600;
+        }
+
+        /* Image-to-Map Mode Styles */
+        .upload-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px dashed var(--neon-cyan);
+            color: var(--neon-cyan);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            margin-top: 8px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .upload-btn:hover {
+            background: rgba(0, 242, 255, 0.2);
+        }
+
+        .custom-map-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0.5;
+            filter: contrast(1.2) brightness(0.8);
+        }
+
+        /* 3D Map Visualization */
+        .map-viewport {
+            flex: 1;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-layer {
+            width: 80%;
+            height: 60%;
+            background: rgba(0, 242, 255, 0.05);
+            border: 2px solid rgba(0, 242, 255, 0.2);
+            transform: rotateX(45deg) rotateZ(-15deg);
+            position: relative;
+            border-radius: 8px;
+            background-image:
+                linear-gradient(rgba(0, 242, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            transition: 1s ease-in-out;
+        }
+
+        /* Tunnel View Style */
+        .map-layer.tunnel {
+            width: 90%;
+            height: 25%;
+            transform: rotateX(60deg) rotateZ(0deg);
+        }
+
+        /* Building View Style (Multi-floor stacked) */
+        .building-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        .map-layer.floor-2 {
+            transform: rotateX(45deg) rotateZ(-15deg) translateZ(120px);
+            opacity: 0.8;
+        }
+
+        .map-layer.floor-1 {
+            transform: rotateX(45deg) rotateZ(-15deg) translateZ(0px);
+        }
+
+        .map-layer.floor-b1 {
+            transform: rotateX(45deg) rotateZ(-15deg) translateZ(-120px);
+            opacity: 0.6;
+        }
+
+        .worker-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--neon-cyan);
+            transform: translate(-50%, -50%) rotateX(-45deg);
+            transition: 0.8s ease-in-out;
+            z-index: 5;
+        }
+
+        .worker-point.alert {
+            background: var(--neon-red);
+            box-shadow: 0 0 20px var(--neon-red);
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+                scale: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+                scale: 1.5;
+            }
+        }
+
+        .label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Bottom Stats Bar */
+        .bottom-bar {
+            height: 120px;
+            background: var(--glass-bg);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            padding: 20px 40px;
+            gap: 40px;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+        <div class="logo">AEGIVIS</div>
+
+        <div class="section-title">Select Facility View</div>
+        <div class="view-switcher">
+            <button class="view-btn" onclick="switchView('tunnel')">Tunnel</button>
+            <button class="view-btn active" id="btn-building" onclick="switchView('building')">Building</button>
+            <button class="view-btn" onclick="switchView('parking')">Parking</button>
+        </div>
+
+        <div class="section-title">Custom Blueprint (Upload)</div>
+        <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+            <span>📁</span> Upload Drawing
+        </button>
+        <input type="file" id="file-input" style="display: none;" onchange="handleFileUpload(event)">
+
+        <div class="section-title">Configuration</div>
+        <button id="install-btn" class="upload-btn"
+            style="border-color: var(--neon-amber); color: var(--neon-amber); background: rgba(255, 170, 0, 0.1);"
+            onclick="toggleInstallMode()">
+            <span>🛠</span> Installation Mode
+        </button>
+
+        <div class="feed-container">
+            <div class="section-title">Live Incident Feed</div>
+            <div id="feed">
+                <div class="incident-card emergency fade-in">
+                    <div style="font-size: 12px; color: var(--neon-red); margin-bottom: 4px;">EMERGENCY</div>
+                    <div style="font-weight: 600;" id="alert-zone">Zone B-14 | Fall Detected</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Worker: Kim Do-hun (HDEC)
+                    </div>
+                </div>
+                <div class="incident-card fade-in">
+                    <div style="font-size: 12px; color: var(--neon-cyan); margin-bottom: 4px;">SYSTEM</div>
+                    <div style="font-weight: 600;">Anchor A-02 | Battery Low</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Remaining: 12% (Est. 14
+                        days)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title" id="personnel-label">Active Personnel</div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--neon-cyan);"><span id="personnel-count">42</span>
+            <span style="font-size: 14px; color: var(--text-muted); font-weight: 400;">Person</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <div style="font-size: 20px; font-weight: 600;" id="facility-title">Seoul Facility [Building A]</div>
+            <div class="status-indicators">
+                <div class="status-item">
+                    <div class="dot cyan"></div> <span>Anchor Online</span>
+                </div>
+                <div class="status-item">
+                    <div class="dot amber"></div> <span>Mobile Nodes</span>
+                </div>
+                <div id="clock" style="font-weight: 600; font-family: monospace; font-size: 18px; margin-left: 20px;">
+                    20:53:50</div>
+            </div>
+        </header>
+
+        <div class="map-viewport" id="viewport">
+            <!-- Layers will be dynamically swapped -->
+        </div>
+
+        <div class="bottom-bar">
+            <div class="stat-box">
+                <div class="stat-value" id="stat-coverage">98.4%</div>
+                <div class="stat-label">Coverage Reliability</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">0.12s</div>
+                <div class="stat-label">Avg. Latency</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat-anchors">128</div>
+                <div class="stat-label">Anchors Deployed</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
+        }
+        setInterval(updateClock, 1000);
+
+        function switchView(type) {
+            const viewport = document.getElementById('viewport');
+            const title = document.getElementById('facility-title');
+            const alertZone = document.getElementById('alert-zone');
+            const buttons = document.querySelectorAll('.view-btn');
+
+            buttons.forEach(b => b.classList.remove('active'));
+            if (type === 'building') { document.getElementById('btn-building').classList.add('active'); }
+
+            viewport.innerHTML = ''; // Clear
+
+            if (type === 'tunnel') {
+                title.innerText = "SFC Namsan Tunnel | Section 2";
+                alertZone.innerText = "Point 450m | Impact Detected";
+                viewport.innerHTML = `
+                    <div class="map-layer tunnel fade-in" id="map">
+                        <div class="worker-point" style="top: 20%; left: 10%;"><div class="label">P-01</div></div>
+                        <div class="worker-point alert" style="top: 50%; left: 60%;"><div class="label">Kim D.H.</div></div>
+                        <div class="worker-point" style="top: 80%; left: 85%;"></div>
+                    </div>
+                `;
+            } else if (type === 'building') {
+                title.innerText = "Seoul Facility [Building A]";
+                alertZone.innerText = "Floor B1 | Fall Detected";
+                viewport.innerHTML = `
+                    <div class="building-container fade-in">
+                        <div class="map-layer floor-2"><div style="position:absolute;top:10px;left:10px;font-size:10px;color:rgba(255,255,255,0.3)">2F (Restricted)</div></div>
+                        <div class="map-layer floor-1">
+                            <div style="position:absolute;top:10px;left:10px;font-size:10px;color:rgba(255,255,255,0.3)">1F (Main)</div>
+                            <div class="worker-point" style="top:30%; left:40%"><div class="label">Lee S.M.</div></div>
+                        </div>
+                        <div class="map-layer floor-b1">
+                            <div style="position:absolute;top:10px;left:10px;font-size:10px;color:rgba(255,255,255,0.3)">B1 (Storage)</div>
+                            <div class="worker-point alert" style="top:60%; left:50%"><div class="label">Kim D.H.</div></div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                title.innerText = "SFC Public Parking [Underground]";
+                alertZone.innerText = "Grid G-08 | EV Smoke Sensing";
+                viewport.innerHTML = `
+                    <div class="map-layer fade-in" style="width:70%; height:70%">
+                         <div class="worker-point" style="top: 10%; left: 10%"><div class="label">EV-01</div></div>
+                         <div class="worker-point alert" style="top: 40%; left: 70%"><div class="label">Alert G-08</div></div>
+                    </div>
+                `;
+            }
+        }
+
+        let isInstallMode = false;
+
+        function toggleInstallMode() {
+            isInstallMode = !isInstallMode;
+            const btn = document.getElementById('install-btn');
+            const alertZone = document.getElementById('alert-zone');
+
+            if (isInstallMode) {
+                btn.style.background = "var(--neon-amber)";
+                btn.style.color = "var(--bg-dark)";
+                btn.innerText = "🛠 Installation Mode: ON";
+                alertZone.innerText = "Select location on map to place Beacon";
+                alertZone.style.color = "var(--neon-amber)";
+            } else {
+                btn.style.background = "rgba(255, 170, 0, 0.1)";
+                btn.style.color = "var(--neon-amber)";
+                btn.innerText = "🛠 Installation Mode";
+                alertZone.innerText = "System Normal | All Anchors Online";
+                alertZone.style.color = "var(--text-main)";
+            }
+        }
+
+        function handleMapClick(e) {
+            if (!isInstallMode) return;
+
+            // Get click coordinates relative to the map layer
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            // Create a new beacon icon (using worker-point class for now but styled differently)
+            const beacon = document.createElement('div');
+            beacon.className = 'worker-point fade-in';
+            beacon.style.background = "var(--neon-amber)";
+            beacon.style.boxShadow = "0 0 10px var(--neon-amber)";
+            beacon.style.top = y + '%';
+            beacon.style.left = x + '%';
+
+            const label = document.createElement('div');
+            label.className = 'label';
+            label.innerText = 'New Beacon #' + (document.querySelectorAll('.worker-point').length + 1);
+            beacon.appendChild(label);
+
+            e.currentTarget.appendChild(beacon);
+
+            // Update stats
+            const count = document.getElementById('stat-anchors');
+            count.innerText = parseInt(count.innerText) + 1;
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const viewport = document.getElementById('viewport');
+                const title = document.getElementById('facility-title');
+                const alertZone = document.getElementById('alert-zone');
+
+                title.innerText = "Custom Facility | " + file.name;
+                alertZone.innerText = "Scanning Image Points...";
+
+                viewport.innerHTML = `
+                    <div class="map-layer fade-in" onclick="handleMapClick(event)" style="width:90%; height:80%; transform: none; background: none; border: 1px solid var(--glass-border);">
+                         <img src="${e.target.result}" class="custom-map-img">
+                         <!-- Placeholders for mapped workers on custom image -->
+                         <div class="worker-point" style="top: 25%; left: 45%"><div class="label">Worker A</div></div>
+                         <div class="worker-point alert" style="top: 60%; left: 30%"><div class="label">Worker B</div></div>
+                         <div class="worker-point" style="top: 40%; left: 75%"><div class="label">Worker C</div></div>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Add this to your HTML sidebar section later or just call it from console for now
+        // But for better UX, let's add a button in the sidebar.
+
+        // Initialize with building view
+        switchView('building');
+
+    </script>
+</body>
+
+</html>

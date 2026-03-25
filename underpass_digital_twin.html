@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIVIS | Underpass Digital Twin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbit&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --danger: #ff0055;
+            --warning: #ffcc00;
+            --bg: #060b13;
+            --card-bg: rgba(16, 24, 39, 0.8);
+            --border: rgba(0, 242, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* --- Header --- */
+        header {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 2px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* --- Main Content --- */
+        main {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            height: 100vh;
+            padding: 80px 20px 20px;
+            gap: 20px;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        /* --- 3D Scene Simulation --- */
+        .viewport {
+            position: relative;
+            background: radial-gradient(circle at center, #1a2a44 0%, #060b13 100%);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .underpass-model {
+            position: relative;
+            width: 600px;
+            height: 300px;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            transform: rotateX(20deg) rotateY(-10deg);
+        }
+
+        .wall {
+            position: absolute;
+            background: rgba(40, 60, 90, 0.4);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        .floor {
+            width: 600px;
+            height: 200px;
+            transform: rotateX(90deg) translateZ(-100px);
+            background: #111;
+        }
+
+        .water {
+            position: absolute;
+            bottom: 0px;
+            width: 600px;
+            height: 0px;
+            background: rgba(0, 242, 255, 0.4);
+            transform: rotateX(90deg) translateZ(-100px);
+            transition: height 0.5s ease;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5);
+        }
+
+        /* --- UI elements --- */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .stat-val {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .alert-active {
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .control-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 700;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .control-btn.emergency {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .control-btn.emergency:hover {
+            background: var(--danger);
+            color: #fff;
+            box-shadow: 0 0 20px var(--danger);
+        }
+
+        .cctv-feed {
+            width: 100%;
+            height: 180px;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-overlay {
+            position: absolute;
+            border: 2px solid var(--primary);
+            width: 60%;
+            height: 40%;
+            top: 30%;
+            left: 20%;
+        }
+
+        .overlay-label {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            background: var(--primary);
+            color: #000;
+            padding: 2px 5px;
+            font-size: 10px;
+        }
+
+        .timeline {
+            height: 100px;
+            width: 100%;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .time-cursor {
+            position: absolute;
+            left: 0%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">AEGIVIS DIGITAL TWIN [PROTO-01]</div>
+        <div class="system-status">
+            <div class="status-dot"></div>
+            SYSTEM ONLINE | UNDERPASS ID: UP-SEOUL-042
+        </div>
+    </header>
+
+    <main>
+        <!-- Left Panel -->
+        <div class="side-panel">
+            <div class="card">
+                <h2>SENSOR FUSION</h2>
+                <div class="stat-row">
+                    <span>RADAR SENSOR</span>
+                    <span class="stat-val" id="radar-val">12.5 mm</span>
+                </div>
+                <div class="stat-row">
+                    <span>AI VISION</span>
+                    <span class="stat-val" id="vision-status">DRY</span>
+                </div>
+                <div class="stat-row">
+                    <span>RELIABILITY</span>
+                    <span class="stat-val">99.8%</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>PREDICTIVE ANALYTICS</h2>
+                <div class="stat-row">
+                    <span>RISING RATE</span>
+                    <span class="stat-val" id="rising-rate">2.4 mm/m</span>
+                </div>
+                <div class="stat-row">
+                    <span>CRITICAL REACH</span>
+                    <span class="stat-val" id="predict-time">18.5 mins</span>
+                </div>
+                <div style="margin-top: 15px; font-size: 12px; color: #888;">
+                    * Based on real-time AWS precipitation data (7.5mm/h)
+                </div>
+            </div>
+
+            <div class="card" id="learning-card" style="display: none;">
+                <h2>DEEP LEARNING FEEDBACK</h2>
+                <div class="stat-row">
+                    <span>LEARNING STATUS</span>
+                    <span class="stat-val" id="learn-status">WAITING...</span>
+                </div>
+                <div class="stat-row">
+                    <span>ERROR MARGIN</span>
+                    <span class="stat-val" id="error-margin">25.0 mm</span>
+                </div>
+                <div
+                    style="height: 10px; background: rgba(0,242,255,0.1); border-radius: 5px; margin-top: 10px; overflow: hidden;">
+                    <div id="learn-progress"
+                        style="height: 100%; width: 0%; background: var(--primary); transition: width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Viewport -->
+        <div class="viewport">
+            <div class="underpass-model">
+                <div class="wall floor"></div>
+                <div class="water" id="water-3d"></div>
+                <div
+                    style="position: absolute; top: -150px; left: 50%; transform: translateX(-50%); text-align: center;">
+                    <div style="color: var(--primary); font-size: 40px; font-weight: 700;" id="main-level">12</div>
+                    <div style="font-size: 12px; letter-spacing: 5px;">CURRENT WATER LEVEL (mm)</div>
+                </div>
+            </div>
+
+            <div style="position: absolute; bottom: 40px; width: 80%; text-align: center;">
+                <div class="timeline">
+                    <div
+                        style="position: absolute; bottom: 0; left: 0; right: 0; height: 30px; background: rgba(0,242,255,0.1);">
+                    </div>
+                    <div class="time-cursor" id="cursor"></div>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px; color: #666;">
+                    <span>NOW</span>
+                    <span>5 MINS</span>
+                    <span>10 MINS</span>
+                    <span>15 MINS</span>
+                    <span>20 MINS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="side-panel">
+            <div class="card">
+                <h2>LIVE AI CCTV</h2>
+                <div class="cctv-feed">
+                    <div style="color: #333; font-size: 12px;">STATIC FEED SIMULATION</div>
+                    <div class="ai-overlay">
+                        <div class="overlay-label">WATERLINE_DETECTED</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>PLC CONTROL</h2>
+                <button class="control-btn" id="barrier-btn">ACTIVATE ENTRY BARRIER</button>
+                <button class="control-btn">START EMERGENCY BROADCAST</button>
+                <button class="control-btn emergency" id="stop-btn">EMERGENCY STOP (ALL)</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SIM_DATA_URL = 'underpass_sim_data.json';
+
+        async function fetchSimData() {
+            try {
+                const response = await fetch(SIM_DATA_URL);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                // Update Metrics
+                document.getElementById('radar-val').innerText = data.radar_reading.toFixed(1) + " mm";
+                document.getElementById('vision-status').innerText = data.vision_reading > 5 ? "DETECTED" : "DRY";
+                document.getElementById('vision-status').style.color = data.vision_reading > 5 ? "var(--primary)" : "#fff";
+
+                const accuracy = Math.max(0, 100 - (data.error_margin_mm / 25.0 * 100 * 0.2));
+                // Update Reliability (the 3rd stat-val in the FIRST card)
+                const fusionStats = document.querySelectorAll('.card')[0].querySelectorAll('.stat-val');
+                if (fusionStats[2]) fusionStats[2].innerText = accuracy.toFixed(1) + "%";
+
+                document.getElementById('main-level').innerText = Math.round(data.actual_level);
+                document.getElementById('water-3d').style.height = (data.actual_level / 2) + "px";
+
+                document.getElementById('predict-time').innerText = data.time_to_evac === "N/A" ? "--" : data.time_to_evac + " mins";
+
+                // Update Learning Panel
+                const learnCard = document.getElementById('learning-card');
+                if (learnCard) {
+                    learnCard.style.display = 'block';
+                    document.getElementById('learn-status').innerText = data.is_raining ? "COLLECTING DATA" : "CALIBRATED (V" + data.learning_iterations + ")";
+                    document.getElementById('error-margin').innerText = data.error_margin_mm + " mm";
+                    const progress = Math.min(100, (data.learning_iterations / 10) * 100);
+                    document.getElementById('learn-progress').style.width = progress + "%";
+                }
+
+                // Status Logic
+                if (data.actual_level > 200) {
+                    document.getElementById('main-level').style.color = "var(--danger)";
+                    document.getElementById('predict-time').classList.add('alert-active');
+                } else {
+                    document.getElementById('main-level').style.color = "var(--primary)";
+                    document.getElementById('predict-time').classList.remove('alert-active');
+                }
+
+                const timelinePos = Math.min(100, (data.actual_level / 250) * 100);
+                document.getElementById('cursor').style.left = timelinePos + "%";
+
+            } catch (e) {
+                console.log("Waiting for simulator...");
+            }
+        }
+
+        setInterval(fetchSimData, 1000);
+
+        document.getElementById('barrier-btn').onclick = function () {
+            alert("PLC SIGNAL SENT: Entry Barrier Closing...");
+            this.innerText = "BARRIER ACTIVATED";
+            this.style.background = "#00ff00";
+            this.style.color = "#000";
+        };
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegivis 3.0 | Screen 2 — 로컬 관제 상세</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Pretendard:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --neon-blue: #00d4ff;
+      --neon-cyan: #0ff;
+      --neon-green: #39ff14;
+      --neon-amber: #ffb300;
+      --neon-red: #ff003c;
+      --neon-purple: #bf5fff;
+      --bg: #050d1a;
+      --panel: rgba(6, 20, 45, 0.82);
+      --border: rgba(0, 212, 255, 0.18);
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-main: 'Pretendard', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg);
+      color: #cde8ff;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Grid bg ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, .04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Per-cam rain overlay ── */
+    .cam-rain {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(10, 30, 60, .0) 0%, rgba(10, 30, 60, .35) 100%);
+      opacity: 0;
+      transition: opacity 1.5s;
+    }
+
+    .cam-rain canvas {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ── Rain overlay ── */
+    #rainOverlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 1.5s;
+    }
+
+    /* ── Danger border pulse ── */
+    #dangerBorder {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 11;
+      border: 0px solid transparent;
+      box-shadow: inset 0 0 0 0 transparent;
+      transition: box-shadow .5s, border-color 1s;
+    }
+
+    @keyframes border-pulse {
+
+      0%,
+      100% {
+        box-shadow: inset 0 0 40px 8px rgba(255, 0, 60, .45);
+      }
+
+      50% {
+        box-shadow: inset 0 0 90px 24px rgba(255, 0, 60, .15);
+      }
+    }
+
+    .border-danger {
+      animation: border-pulse 1.8s ease-in-out infinite;
+    }
+
+    .border-warning {
+      box-shadow: inset 0 0 50px 10px rgba(255, 179, 0, .18) !important;
+    }
+
+    /* ── Lightning flash ── */
+    #lightning {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 12;
+      background: rgba(255, 255, 255, 0);
+      transition: background .05s;
+    }
+
+    /* ── Scanline overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+          rgba(0, 0, 0, .08) 2px, rgba(0, 0, 0, .08) 4px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .layout {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 10px;
+      gap: 8px;
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      backdrop-filter: blur(14px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+      opacity: .6;
+    }
+
+    /* ── Header ── */
+    header.panel {
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--neon-blue);
+      text-shadow: 0 0 12px var(--neon-blue), 0 0 28px rgba(0, 212, 255, .4);
+      letter-spacing: .08em;
+    }
+
+    .logo-sub {
+      font-size: .7rem;
+      color: #5599bb;
+      margin-left: 10px;
+      letter-spacing: .1em;
+    }
+
+    .hdr-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .clock-box {
+      font-family: var(--font-mono);
+      font-size: .8rem;
+      padding: 4px 12px;
+      border-radius: 4px;
+      background: rgba(0, 30, 60, .7);
+      border: 1px solid rgba(0, 212, 255, .25);
+      color: var(--neon-blue);
+      text-shadow: 0 0 6px var(--neon-blue);
+    }
+
+    .link-pill {
+      font-size: .72rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 179, 0, .3);
+      background: rgba(255, 179, 0, .08);
+      color: var(--neon-amber);
+      transition: all .4s;
+    }
+
+    .link-pill.ok {
+      border-color: rgba(57, 255, 20, .3);
+      background: rgba(57, 255, 20, .08);
+      color: var(--neon-green);
+    }
+
+    /* ── Site bar ── */
+    .sitebar {
+      padding: 8px 16px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .site-title {
+      font-family: var(--font-mono);
+      font-size: 1.3rem;
+      color: #fff;
+      letter-spacing: .04em;
+    }
+
+    .site-meta {
+      font-size: .7rem;
+      color: #4a7a99;
+      margin-top: 2px;
+    }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      cursor: pointer;
+      padding: 5px 14px;
+      border-radius: 4px;
+      border: 1px solid;
+      transition: all .25s;
+    }
+
+    .btn-mode {
+      border-color: rgba(0, 212, 255, .3);
+      background: rgba(0, 212, 255, .06);
+      color: var(--neon-blue);
+    }
+
+    .btn-mode.active,
+    .btn-mode:hover {
+      background: rgba(0, 212, 255, .18);
+      box-shadow: 0 0 12px rgba(0, 212, 255, .3);
+    }
+
+    .btn-approve {
+      border-color: rgba(255, 0, 60, .5);
+      background: rgba(255, 0, 60, .12);
+      color: var(--neon-red);
+      padding: 5px 20px;
+      font-size: .8rem;
+      font-weight: 700;
+    }
+
+    .btn-approve:hover {
+      background: rgba(255, 0, 60, .28);
+      box-shadow: 0 0 18px rgba(255, 0, 60, .4);
+    }
+
+    /* ── Main grid ── */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr 360px;
+      /* 3-column layout */
+      gap: 12px;
+      min-height: 0;
+    }
+
+    /* ── CAM feeds ── */
+    .cam-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    #camGrid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-auto-rows: 1fr;
+      /* Fill available height evenly */
+      gap: 6px;
+      min-height: 0;
+    }
+
+    /* Removed .view-4ch to enforce single column */
+
+    .cam-feed {
+      position: relative;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 212, 255, .2);
+      background: #000;
+    }
+
+    .cam-feed img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: .75;
+      display: block;
+    }
+
+    /* corner brackets */
+    .cam-feed::before,
+    .cam-feed::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--neon-blue);
+      border-style: solid;
+      z-index: 3;
+    }
+
+    .cam-feed::before {
+      top: 4px;
+      left: 4px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .cam-feed::after {
+      bottom: 4px;
+      right: 4px;
+      border-width: 0 2px 2px 0;
+    }
+
+    .cam-lbl {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      z-index: 4;
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      background: rgba(0, 0, 0, .7);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 255, 255, .2);
+    }
+
+    .cam-ai {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      z-index: 4;
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      background: rgba(0, 0, 0, .7);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--neon-green);
+      border: 1px solid rgba(57, 255, 20, .2);
+    }
+
+    .rec {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--neon-red);
+      border-radius: 50%;
+      margin-right: 5px;
+      animation: blink 1s infinite;
+      box-shadow: 0 0 4px var(--neon-red);
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* ── Data stream overlay ── */
+    .data-stream {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 28px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      pointer-events: none;
+      gap: 0;
+    }
+
+    .stream-char {
+      font-family: var(--font-mono);
+      font-size: .5rem;
+      color: rgba(57, 255, 20, .3);
+      animation: stream-fall 3s linear infinite;
+      line-height: 1.1;
+    }
+
+    @keyframes stream-fall {
+      0% {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: .6;
+      }
+
+      100% {
+        transform: translateY(1200%);
+        opacity: 0;
+      }
+    }
+
+    /* ── Right sidebar ── */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* ── Ring gauge ── */
+    .sensor-grid {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sensor-hdr {
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--neon-blue);
+      opacity: .8;
+      margin-bottom: 4px;
+    }
+
+    .ring-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ring-wrap {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+    }
+
+    .ring-wrap svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .06);
+      stroke-width: 5;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 138;
+      transition: stroke-dashoffset .6s cubic-bezier(.4, 0, .2, 1), stroke .4s;
+    }
+
+    .ring-val {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      line-height: 1;
+    }
+
+    .ring-num {
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .ring-unit {
+      font-size: .45rem;
+      color: #5599bb;
+    }
+
+    .ring-info {
+      flex: 1;
+    }
+
+    .ring-label {
+      font-size: .75rem;
+      font-weight: 600;
+      color: #c8e8ff;
+    }
+
+    .ring-desc {
+      font-size: .62rem;
+      color: #406080;
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    /* Sparkline canvas */
+    .spark-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    canvas.spark {
+      flex: 1;
+      height: 28px;
+      border-radius: 3px;
+    }
+
+    /* ── Weather panel ── */
+    .wx-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    .wx-cell {
+      background: rgba(0, 15, 33, .5);
+      border: 1px solid rgba(0, 212, 255, .12);
+      border-radius: 5px;
+      padding: 8px 10px;
+    }
+
+    .wx-label {
+      font-size: .6rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #406080;
+    }
+
+    .wx-val {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px var(--neon-cyan);
+      margin-top: 2px;
+    }
+
+    .wx-unit {
+      font-size: .55rem;
+      color: #5599bb;
+    }
+
+    /* Rain mini-chart */
+    .rain-chart-wrap {
+      padding: 0 14px 10px;
+    }
+
+    .rain-chart-label {
+      font-family: var(--font-mono);
+      font-size: .6rem;
+      color: var(--neon-purple);
+      margin-bottom: 4px;
+    }
+
+    canvas#rainChart {
+      width: 100%;
+      height: 40px;
+      border-radius: 3px;
+    }
+
+    /* ── Verdict card ── */
+    .verdict-card {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      position: relative;
+      overflow: hidden;
+      transition: border-color .5s, box-shadow .5s;
+    }
+
+    .verdict-card .vglow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(0, 212, 255, .12) 0%, transparent 70%);
+      transition: background .5s;
+      pointer-events: none;
+    }
+
+    .verdict-label {
+      font-family: var(--font-mono);
+      font-size: .6rem;
+      letter-spacing: .15em;
+      color: #406080;
+      z-index: 1;
+    }
+
+    .verdict-num {
+      font-family: var(--font-mono);
+      font-size: 3.6rem;
+      font-weight: 900;
+      z-index: 1;
+      line-height: 1;
+    }
+
+    .verdict-unit {
+      font-size: 1rem;
+      color: #4a7a99;
+      margin-left: 6px;
+      z-index: 1;
+    }
+
+    .verdict-badge {
+      z-index: 1;
+      margin-top: 8px;
+      padding: 4px 16px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: .75rem;
+      font-weight: 700;
+      border: 1px solid rgba(0, 212, 255, .4);
+      background: rgba(0, 212, 255, .1);
+      color: var(--neon-blue);
+      transition: all .5s;
+      text-shadow: 0 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .verdict-text {
+      z-index: 1;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(0, 212, 255, .1);
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      color: #4a7a99;
+      text-align: center;
+      width: 100%;
+      line-height: 1.6;
+    }
+
+    /* Radar scan ring on verdict */
+    .radar-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 212, 255, .2);
+      animation: radar-expand 3s ease-out infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes radar-expand {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: .6;
+      }
+
+      100% {
+        width: 220%;
+        height: 220%;
+        opacity: 0;
+      }
+    }
+
+    /* State variants */
+    .verdict-danger {
+      border-color: var(--neon-red) !important;
+      box-shadow: 0 0 28px rgba(255, 0, 60, .3) !important;
+    }
+
+    .verdict-warning {
+      border-color: var(--neon-amber) !important;
+      box-shadow: 0 0 18px rgba(255, 179, 0, .2) !important;
+    }
+
+    .verdict-ok {
+      border-color: rgba(0, 212, 255, .35) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Weather overlays -->
+  <canvas id="rainOverlay"></canvas>
+  <div id="dangerBorder"></div>
+  <div id="lightning"></div>
+
+  <div class="layout">
+
+    <!-- Header -->
+    <header class="panel">
+      <div style="display:flex;align-items:center;gap:4px">
+        <span class="logo-text">AEGIVIS 3.0</span>
+        <span class="logo-sub">// LOCAL CTRL · SCREEN 2</span>
+      </div>
+      <div class="hdr-right">
+        <div class="clock-box" id="clock">--:--:--</div>
+        <div class="link-pill" id="linkStatus"><i class="fas fa-satellite-dish" style="margin-right:5px"></i>SCREEN1
+          대기중...</div>
+      </div>
+    </header>
+
+    <!-- Site bar -->
+    <div class="panel sitebar">
+      <div>
+        <div style="font-size:.65rem;color:#406080;font-family:var(--font-mono);letter-spacing:.1em">SELECTED SITE</div>
+        <div class="site-title" id="siteTitle">— WAITING —</div>
+        <div class="site-meta">ID: <span id="siteId">—</span> &nbsp;·&nbsp; LAST RX: <span id="lastRx">—</span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-mode active" id="btn2" onclick="setCams(2)">2CH</button>
+        <button class="btn btn-mode" id="btn4" onclick="setCams(4)">4CH</button>
+        <button class="btn btn-approve" onclick="manualApprove()"><i class="fas fa-exclamation-circle"
+            style="margin-right:6px"></i>현장 경찰 승인 (차단막 하강)</button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <main>
+      <!-- Left: Cameras -->
+      <div class="cam-section">
+        <div id="camGrid">
+          <!-- CH1 -->
+          <div class="cam-feed" id="cam1">
+            <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800">
+            <div class="cam-rain" id="cr1"><canvas id="crc1"></canvas></div>
+            <div class="cam-lbl"><span class="rec"></span>CH1 · 진입로 전방</div>
+            <div class="cam-ai" id="aiTag1">AI: 수위 감지중...</div>
+            <div class="data-stream" id="ds1"></div>
+          </div>
+          <!-- CH2 -->
+          <div class="cam-feed" id="cam2" style="transform:scaleX(-1)">
+            <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800">
+            <div class="cam-rain" id="cr2"><canvas id="crc2"></canvas></div>
+            <div class="cam-lbl" style="transform:scaleX(-1)"><span class="rec"></span>CH2 · 진출로 전방</div>
+            <div class="data-stream" id="ds2"></div>
+          </div>
+          <!-- CH3 -->
+          <div class="cam-feed hidden" id="cam3">
+            <img src="https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&q=80&w=800">
+            <div class="cam-rain" id="cr3"><canvas id="crc3"></canvas></div>
+            <div class="cam-lbl"><span class="rec"></span>CH3 · 내부 좌측</div>
+          </div>
+          <!-- CH4 -->
+          <div class="cam-feed hidden" id="cam4" style="transform:scaleX(-1)">
+            <img src="https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&q=80&w=800">
+            <div class="cam-rain" id="cr4"><canvas id="crc4"></canvas></div>
+            <div class="cam-lbl" style="transform:scaleX(-1)"><span class="rec"></span>CH4 · 내부 우측</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Middle: Maps Center Column -->
+      <div class="map-section" style="display:flex;flex-direction:column;gap:12px;min-height:0">
+
+        <!-- Seoul metro map (Takes more vertical space) -->
+        <div class="panel" style="flex:1.5;display:flex;flex-direction:column;overflow:hidden;position:relative">
+          <div
+            style="font-family:var(--font-mono);font-size:.65rem;font-weight:700;color:var(--neon-purple);padding:8px 14px;flex-shrink:0;letter-spacing:.15em;border-bottom:1px solid rgba(191,95,255,.15);background:rgba(0,0,0,0.3)">
+            <i class="fas fa-city" style="margin-right:6px"></i>서울 광역 기상 현황
+          </div>
+          <div style="flex:1;position:relative">
+            <div id="seoulMap" style="position:absolute;inset:0;background:#050d1a"></div>
+            <div id="seoulCloudOverlay"
+              style="position:absolute;inset:0;z-index:900;pointer-events:none;overflow:hidden"></div>
+          </div>
+        </div>
+
+        <!-- Neighborhood map -->
+        <div class="panel" style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
+          <div
+            style="font-family:var(--font-mono);font-size:.65rem;font-weight:700;color:var(--neon-blue);padding:8px 14px;flex-shrink:0;letter-spacing:.15em;border-bottom:1px solid rgba(0,212,255,.15);background:rgba(0,0,0,0.3)">
+            <i class="fas fa-map-marker-alt" style="margin-right:6px"></i>현장 동네 미니맵
+          </div>
+          <div style="flex:1;position:relative">
+            <div id="localMap" style="position:absolute;inset:0;background:#050d1a"></div>
+            <div id="localCloudOverlay"
+              style="position:absolute;inset:0;z-index:900;pointer-events:none;overflow:hidden"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Sensor + Weather + Verdict -->
+      <div class="right-col">
+
+        <!-- Sensor Ring Gauges -->
+        <div class="panel sensor-grid">
+          <div class="sensor-hdr"><i class="fas fa-satellite-dish" style="margin-right:6px"></i>REALTIME SENSOR DATA
+          </div>
+
+          <!-- Radar -->
+          <div class="ring-row">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 56 56">
+                <circle class="ring-bg" cx="28" cy="28" r="22" />
+                <circle class="ring-fill" id="rRing" cx="28" cy="28" r="22" stroke="#00d4ff" stroke-dashoffset="138" />
+              </svg>
+              <div class="ring-val"><span class="ring-num" id="v-radar"
+                  style="color:#00d4ff;text-shadow:0 0 8px #00d4ff">--</span><span class="ring-unit">cm</span></div>
+            </div>
+            <div class="ring-info">
+              <div class="ring-label">📡 80GHz 레이더 수위</div>
+              <div class="ring-desc">mm급 정밀도 · 오노이즈 필터링</div>
+            </div>
+          </div>
+
+          <!-- Vision AI -->
+          <div class="ring-row">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 56 56">
+                <circle class="ring-bg" cx="28" cy="28" r="22" />
+                <circle class="ring-fill" id="vRing" cx="28" cy="28" r="22" stroke="#818cf8" stroke-dashoffset="138" />
+              </svg>
+              <div class="ring-val"><span class="ring-num" id="v-vision"
+                  style="color:#818cf8;text-shadow:0 0 8px #818cf8">--</span><span class="ring-unit">cm</span></div>
+            </div>
+            <div class="ring-info">
+              <div class="ring-label">📷 AI 비전 카메라</div>
+              <div class="ring-desc">4K 딥러닝 수위 인식</div>
+            </div>
+          </div>
+
+          <!-- Level sensor -->
+          <div class="ring-row">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 56 56">
+                <circle class="ring-bg" cx="28" cy="28" r="22" />
+                <circle class="ring-fill" id="lRing" cx="28" cy="28" r="22" stroke="#22d3ee" stroke-dashoffset="138" />
+              </svg>
+              <div class="ring-val"><span class="ring-num" id="v-level"
+                  style="color:#22d3ee;text-shadow:0 0 8px #22d3ee">--</span><span class="ring-unit">cm</span></div>
+            </div>
+            <div class="ring-info">
+              <div class="ring-label">💧 접점 수위계</div>
+              <div class="ring-desc">다단계 접점 · 하드웨어 직출력</div>
+            </div>
+          </div>
+
+          <!-- Rain + sparkline -->
+          <div class="ring-row">
+            <div class="ring-wrap">
+              <svg viewBox="0 0 56 56">
+                <circle class="ring-bg" cx="28" cy="28" r="22" />
+                <circle class="ring-fill" id="rnRing" cx="28" cy="28" r="22" stroke="#a78bfa" stroke-dashoffset="138" />
+              </svg>
+              <div class="ring-val"><span class="ring-num" id="v-rain"
+                  style="color:#a78bfa;text-shadow:0 0 8px #a78bfa">--</span><span class="ring-unit">mm/h</span></div>
+            </div>
+            <div class="ring-info" style="flex:1">
+              <div class="ring-label">🌧️ 기상청 강수량</div>
+              <div class="ring-desc">실시간 AWS 데이터 · 1분 갱신</div>
+              <canvas id="rainSpark" height="20" style="width:100%;margin-top:4px;border-radius:2px"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Local Weather Panel -->
+        <div class="panel">
+          <div
+            style="padding:8px 14px 4px;font-family:var(--font-mono);font-size:.65rem;letter-spacing:.12em;color:var(--neon-purple)">
+            <i class="fas fa-wind" style="margin-right:6px"></i>로컬 현장 기상 센서
+          </div>
+          <div class="wx-grid">
+            <div class="wx-cell">
+              <div class="wx-label">온도</div>
+              <div class="wx-val"><span id="wx-temp">--</span><span class="wx-unit"> °C</span></div>
+            </div>
+            <div class="wx-cell">
+              <div class="wx-label">습도</div>
+              <div class="wx-val"><span id="wx-hum">--</span><span class="wx-unit"> %</span></div>
+            </div>
+            <div class="wx-cell">
+              <div class="wx-label">풍속</div>
+              <div class="wx-val"><span id="wx-wind">--</span><span class="wx-unit"> m/s</span></div>
+            </div>
+            <div class="wx-cell">
+              <div class="wx-label">기압</div>
+              <div class="wx-val"><span id="wx-pres">--</span><span class="wx-unit"> hPa</span></div>
+            </div>
+          </div>
+          <div class="rain-chart-wrap">
+            <div class="rain-chart-label">▸ 강수량 추이 (최근 30s)</div>
+            <canvas id="rainChart"></canvas>
+          </div>
+        </div>
+
+        <!-- AI Fusion Verdict -->
+        <div class="verdict-card" id="verdictCard">
+          <div class="vglow" id="verdictGlow"></div>
+          <div class="radar-ring" style="animation-delay:0s"></div>
+          <div class="radar-ring" style="animation-delay:1s"></div>
+          <div class="radar-ring" style="animation-delay:2s"></div>
+          <div class="verdict-label">4중 퓨전 최종 수위</div>
+          <div style="display:flex;align-items:baseline">
+            <span class="verdict-num" id="v-fused" style="color:#00d4ff;text-shadow:0 0 20px #00d4ff">--</span>
+            <span class="verdict-unit">cm</span>
+          </div>
+          <div class="verdict-badge" id="verdictBadge">
+            <i class="fas fa-spinner fa-spin"></i> 데이터 수신 대기
+          </div>
+          <div class="verdict-text" id="verdictText">Screen 1에서 구역을 선택하면 데이터가 자동으로 표시됩니다.</div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+
+  <script>
+    // ── Data stream chars ──
+    const CHARS = '01이지비스AEGIVIS수위감지침수0F9CAB';
+    function buildStream(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      for (let i = 0; i < 18; i++) {
+        const s = document.createElement('span');
+        s.className = 'stream-char';
+        s.style.animationDelay = (Math.random() * 3) + 's';
+        s.style.animationDuration = (2 + Math.random() * 2) + 's';
+        s.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+        el.appendChild(s);
+      }
+    }
+    buildStream('ds1'); buildStream('ds2');
+    setInterval(() => {
+      ['ds1', 'ds2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.querySelectorAll('.stream-char').forEach(s => {
+          s.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+        });
+      });
+    }, 400);
+
+    // ── SVG Ring helpers ──
+    const CIRC = 2 * Math.PI * 22; // ~138.23
+    function setRing(id, val, max, col) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const pct = Math.min(1, Math.max(0, val / max));
+      el.style.strokeDashoffset = CIRC * (1 - pct);
+      if (pct > 0.75) el.style.stroke = '#ff003c';
+      else if (pct > 0.5) el.style.stroke = '#ffb300';
+      else el.style.stroke = col;
+    }
+
+    // ── Rain sparkline (30 points) ──
+    const rainHistory = new Array(30).fill(0);
+    const rainCtx = document.getElementById('rainSpark').getContext('2d');
+    const rainChartCtx = document.getElementById('rainChart').getContext('2d');
+
+    function drawSpark(ctx, data, col, fillCol) {
+      const w = ctx.canvas.offsetWidth || 120;
+      const h = ctx.canvas.height;
+      ctx.canvas.width = w;
+      const max = Math.max(...data, 1);
+      ctx.clearRect(0, 0, w, h);
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = (i / (data.length - 1)) * w;
+        const y = h - (v / max) * (h - 2) - 1;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+      ctx.fillStyle = fillCol; ctx.fill();
+    }
+
+    // ── Local weather sim ──
+    let wxTick = 0;
+    function simWx() {
+      wxTick++;
+      const temp = (18 + Math.sin(wxTick * .03) * 3 + (Math.random() - .5) * .4).toFixed(1);
+      const hum = Math.round(60 + Math.sin(wxTick * .05) * 15 + (Math.random() - .5) * 3);
+      const wind = (2.5 + Math.sin(wxTick * .07) * 1.8 + Math.random() * .5).toFixed(1);
+      const pres = (1013 + Math.sin(wxTick * .01) * 3 + (Math.random() - .5) * .5).toFixed(1);
+      document.getElementById('wx-temp').textContent = temp;
+      document.getElementById('wx-hum').textContent = hum;
+      document.getElementById('wx-wind').textContent = wind;
+      document.getElementById('wx-pres').textContent = pres;
+    }
+
+    // ── Main state ──
+    let latestData = null;
+    let selfTick = 0;
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'siteUpdate') {
+        const { siteInfo, data, rain } = e.data;
+        latestData = data;
+        document.getElementById('siteTitle').textContent = siteInfo.title;
+        document.getElementById('siteId').textContent = siteInfo.id;
+        document.getElementById('lastRx').textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+        const lp = document.getElementById('linkStatus');
+        lp.innerHTML = '<i class="fas fa-check-circle" style="margin-right:5px"></i>SCREEN1 연결됨';
+        lp.className = 'link-pill ok';
+        renderAll(data, rain || 0);
+      }
+    });
+
+    function standaloneTick() {
+      if (latestData) return;
+      selfTick++;
+      const r = Math.max(0, 16.0 + Math.sin(selfTick * .12) * 2.5 + (Math.random() - .5) * .8);
+      const v = Math.max(0, 17.2 + Math.sin(selfTick * .10) * 1.2 + (Math.random() - .5) * .5);
+      const l = Math.max(0, 15.5 + Math.sin(selfTick * .08) * .8 + (Math.random() - .5) * .3);
+      const rain = Math.max(0, 8 + Math.sin(selfTick * .06) * 5 + (Math.random() - .5) * 1.5);
+      renderAll({ r, v, l, f: r * .3 + v * .5 + l * .2 }, rain);
+      document.getElementById('siteTitle').textContent = '강남구 테헤란로 지하차도 [독립모드]';
+      document.getElementById('siteId').textContent = 'GN-UD-01';
+    }
+
+    function renderAll(d, rain) {
+      if (!d) return;
+
+      // Rings
+      setRing('rRing', d.r, 30, '#00d4ff');
+      setRing('vRing', d.v, 30, '#818cf8');
+      setRing('lRing', d.l, 20, '#22d3ee');
+      setRing('rnRing', rain, 60, '#a78bfa');
+
+      // Values
+      document.getElementById('v-radar').textContent = d.r.toFixed(1);
+      document.getElementById('v-vision').textContent = d.v.toFixed(1);
+      document.getElementById('v-level').textContent = d.l.toFixed(1);
+      document.getElementById('v-rain').textContent = rain.toFixed(1);
+      document.getElementById('v-fused').textContent = d.f.toFixed(1);
+      document.getElementById('aiTag1').textContent = `AI: 수위 ${d.v.toFixed(1)}cm 인식`;
+
+      // Rain history
+      rainHistory.push(rain); if (rainHistory.length > 30) rainHistory.shift();
+      drawSpark(rainCtx, rainHistory, '#a78bfa', 'rgba(167,139,250,.15)');
+      drawSpark(rainChartCtx, rainHistory, '#a78bfa', 'rgba(167,139,250,.12)');
+
+      // Weather visual FX
+      setRainEffect(d.f, rain);
+      scheduleLightning(rain);
+
+      // Verdict
+      const card = document.getElementById('verdictCard');
+      const glow = document.getElementById('verdictGlow');
+      const badge = document.getElementById('verdictBadge');
+      const text = document.getElementById('verdictText');
+      const num = document.getElementById('v-fused');
+
+      if (d.r > 8 && d.v < 2 && d.l < 2) {
+        card.className = 'verdict-card verdict-warning';
+        glow.style.background = 'radial-gradient(ellipse at center,rgba(255,179,0,.18) 0%,transparent 70%)';
+        num.style.cssText = 'color:#ffb300;text-shadow:0 0 20px #ffb300';
+        badge.style.cssText = 'z-index:1;margin-top:8px;padding:4px 16px;border-radius:20px;font-family:var(--font-mono);font-size:.75rem;font-weight:700;border:1px solid rgba(255,179,0,.5);background:rgba(255,179,0,.12);color:#ffb300;display:flex;align-items:center;gap:8px;transition:all .5s';
+        badge.innerHTML = '<i class="fas fa-shield-alt"></i> 오보 차단됨 (False Alarm)';
+        text.textContent = '레이더 노이즈 → 비전AI·수위계 교차검증 완료. 차단막 유보.';
+      } else if (d.f >= 15) {
+        card.className = 'verdict-card verdict-danger';
+        glow.style.background = 'radial-gradient(ellipse at center,rgba(255,0,60,.28) 0%,transparent 70%)';
+        num.style.cssText = 'color:#ff003c;text-shadow:0 0 30px #ff003c,0 0 60px rgba(255,0,60,.4)';
+        badge.style.cssText = 'z-index:1;margin-top:8px;padding:4px 16px;border-radius:20px;font-family:var(--font-mono);font-size:.75rem;font-weight:700;border:1px solid rgba(255,0,60,.6);background:rgba(255,0,60,.2);color:#ff003c;display:flex;align-items:center;gap:8px;animation:blink 1s infinite;text-shadow:0 0 8px #ff003c;transition:all .5s';
+        badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 통제 기준 초과 — 경찰 현장 출동 요망';
+        text.textContent = `딥러닝 판단: 현장 수위 ${d.f.toFixed(1)}cm. 현장 경찰의 지휘 및 최종 안전 확인 후 차단막 하강을 승인하십시오.`;
+      } else if (d.f >= 7) {
+        card.className = 'verdict-card verdict-warning';
+        glow.style.background = 'radial-gradient(ellipse at center,rgba(255,179,0,.15) 0%,transparent 70%)';
+        num.style.cssText = 'color:#ffb300;text-shadow:0 0 20px #ffb300';
+        badge.style.cssText = 'z-index:1;margin-top:8px;padding:4px 16px;border-radius:20px;font-family:var(--font-mono);font-size:.75rem;font-weight:700;border:1px solid rgba(255,179,0,.5);background:rgba(255,179,0,.12);color:#ffb300;display:flex;align-items:center;gap:8px;transition:all .5s';
+        const mins = Math.max(1, Math.floor((15 - d.f) / 0.3));
+        badge.innerHTML = '<i class="fas fa-bell"></i> 주의 (15cm 임박)';
+        text.textContent = `딥러닝 예측: 약 ${mins}분 후 통제 기준 도달 예상. 사전 대비 요망.`;
+      } else {
+        card.className = 'verdict-card verdict-ok';
+        glow.style.background = 'radial-gradient(ellipse at center,rgba(0,212,255,.10) 0%,transparent 70%)';
+        num.style.cssText = 'color:#00d4ff;text-shadow:0 0 20px #00d4ff';
+        badge.style.cssText = 'z-index:1;margin-top:8px;padding:4px 16px;border-radius:20px;font-family:var(--font-mono);font-size:.75rem;font-weight:700;border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.08);color:#00d4ff;display:flex;align-items:center;gap:8px;transition:all .5s';
+        badge.innerHTML = '<i class="fas fa-check-circle"></i> 정상 감시중';
+        text.textContent = 'AI 4중 심층방어 감시 중. 노면 상태 안정적.';
+      }
+    }
+
+    function setCams(n) {
+      document.getElementById('cam1').style.display = 'block';
+      document.getElementById('cam2').style.display = 'block';
+      document.getElementById('cam3').style.display = n === 4 ? 'block' : 'none';
+      document.getElementById('cam4').style.display = n === 4 ? 'block' : 'none';
+      document.getElementById('btn2').className = `btn btn-mode${n === 2 ? ' active' : ''}`;
+      document.getElementById('btn4').className = `btn btn-mode${n === 4 ? ' active' : ''}`;
+    }
+
+    function manualApprove() {
+      const fused = latestData ? latestData.f : (parseFloat(document.getElementById('v-fused').textContent) || 0);
+      if (fused < 7) { alert('현재 수위가 통제 기준 미만이므로 차단막 가동이 불필요합니다.'); return; }
+      
+      const msg = `[ 시스템 경고: 차단막 하강 전 필수 확인 사항 ]\n\n` +
+                  `현재 융합 수위: ${fused.toFixed(1)}cm (위험 초과)\n\n` +
+                  `1. 서울시설공단 및 관할 경찰 현장 도착 완료\n` +
+                  `2. 지하차도 진출입로 차량 전면 통제 완료\n` +
+                  `3. 차도 내부 고립 차량 없음 최종 확인\n\n` +
+                  `※ 본 하강 명령은 현장 경찰의 최종 지휘 하에 이루어져야 합니다.\n\n` +
+                  `위 사항이 모두 현장과 교신 확인되었으며, 차단막 하강을 실행하시겠습니까?`;
+                  
+      if (confirm(msg)) {
+        alert('✅ 현장 경찰 승인 확인됨. 차단막 하강 명령을 전송합니다.\n현장 VMS 점멸 및 사이렌이 자동 활성화되었습니다.');
+      }
+    }
+
+    // ── RAIN CANVAS SYSTEM ──
+    const rainCanvas = document.getElementById('rainOverlay');
+    const rCtx = rainCanvas.getContext('2d');
+    let drops = [];
+    let rainIntensity = 0; // 0 = off, 0.3 = light, 1 = heavy
+
+    function resizeRain() {
+      rainCanvas.width = window.innerWidth;
+      rainCanvas.height = window.innerHeight;
+    }
+    resizeRain();
+    window.addEventListener('resize', resizeRain);
+
+    function initDrops(n) {
+      drops = [];
+      for (let i = 0; i < n; i++) drops.push({
+        x: Math.random() * rainCanvas.width,
+        y: Math.random() * rainCanvas.height,
+        len: 8 + Math.random() * 18,
+        speed: 8 + Math.random() * 14,
+        alpha: .25 + Math.random() * .45
+      });
+    }
+    initDrops(0);
+
+    function animateRain() {
+      requestAnimationFrame(animateRain);
+      if (rainIntensity === 0) { rCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height); return; }
+      rCtx.clearRect(0, 0, rainCanvas.width, rainCanvas.height);
+      rCtx.strokeStyle = 'rgba(180,230,255,';
+      rCtx.lineWidth = 1;
+      drops.forEach(d => {
+        rCtx.beginPath();
+        rCtx.globalAlpha = d.alpha * rainIntensity;
+        // angle: slight diagonal
+        const ax = d.speed * 0.25;
+        const ay = d.speed;
+        rCtx.moveTo(d.x, d.y);
+        rCtx.lineTo(d.x + ax * (d.len / d.speed), d.y + d.len);
+        rCtx.stroke();
+        d.x += ax;
+        d.y += ay;
+        if (d.y > rainCanvas.height) {
+          d.y = -d.len;
+          d.x = Math.random() * rainCanvas.width;
+        }
+      });
+      rCtx.globalAlpha = 1;
+    }
+    animateRain();
+
+    function setRainEffect(level, rain) {
+      const overlay = document.getElementById('rainOverlay');
+      const border = document.getElementById('dangerBorder');
+
+      // Update map clouds
+      if (typeof setMapClouds === 'function') setMapClouds(rain);
+
+      // ─── Per-camera rain canvas ───
+      const camIds = ['crc1', 'crc2', 'crc3', 'crc4'];
+      const camRainIds = ['cr1', 'cr2', 'cr3', 'cr4'];
+
+      // Determine alpha based on rainfall
+      let camRainAlpha = 0;
+      let numDrops = 0;
+      if (rain < 3) { camRainAlpha = 0; numDrops = 0; }
+      else if (rain < 15) { camRainAlpha = 0.35; numDrops = 60; }
+      else if (rain < 30) { camRainAlpha = 0.65; numDrops = 140; }
+      else { camRainAlpha = 0.9; numDrops = 250; }
+
+      // Show/hide the cam-rain overlay divs & darken camera
+      camRainIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.opacity = camRainAlpha > 0 ? '1' : '0';
+      });
+
+      // Draw rain on each camera canvas using requestAnimationFrame loop
+      if (!window._camRainRunning && numDrops > 0) {
+        window._camRainRunning = true;
+        window._camRainDrops = {};
+        camIds.forEach(id => {
+          const cvs = document.getElementById(id);
+          if (!cvs) return;
+          const parent = cvs.parentElement.parentElement;
+          cvs.width = parent.offsetWidth || 400;
+          cvs.height = parent.offsetHeight || 240;
+          const arr = [];
+          for (let i = 0; i < numDrops; i++) {
+            arr.push({
+              x: Math.random() * cvs.width,
+              y: Math.random() * cvs.height,
+              len: 6 + Math.random() * 16,
+              spd: 6 + Math.random() * 12,
+              a: 0.2 + Math.random() * 0.5
+            });
+          }
+          window._camRainDrops[id] = arr;
+        });
+
+        (function loop() {
+          if (!window._camRainRunning) return;
+          camIds.forEach(id => {
+            const cvs = document.getElementById(id);
+            if (!cvs) return;
+            const ctx = cvs.getContext('2d');
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            if (camRainAlpha === 0) return;
+            const drps = window._camRainDrops[id] || [];
+            drps.forEach(d => {
+              ctx.beginPath();
+              ctx.globalAlpha = d.a * camRainAlpha;
+              ctx.strokeStyle = '#b0e0ff';
+              ctx.lineWidth = 1;
+              ctx.moveTo(d.x, d.y);
+              ctx.lineTo(d.x + d.spd * 0.2, d.y + d.len);
+              ctx.stroke();
+              d.x += d.spd * 0.2;
+              d.y += d.spd;
+              if (d.y > cvs.height) {
+                d.y = -d.len;
+                d.x = Math.random() * cvs.width;
+              }
+            });
+            ctx.globalAlpha = 1;
+          });
+          requestAnimationFrame(loop);
+        })();
+      } else if (numDrops === 0) {
+        window._camRainRunning = false;
+        // clear canvases
+        camIds.forEach(id => {
+          const cvs = document.getElementById(id);
+          if (cvs) { const ctx = cvs.getContext('2d'); ctx.clearRect(0, 0, cvs.width, cvs.height); }
+        });
+      }
+
+      // Global background overlay (less heavy now since cam has rain)
+      if (rain < 3) {
+        rainIntensity = 0;
+        initDrops(0);
+        overlay.style.opacity = 0;
+      } else if (rain < 15) {
+        rainIntensity = 0.2;
+        if (drops.length !== 40) initDrops(40);
+        overlay.style.opacity = 0.5;
+      } else if (rain < 30) {
+        rainIntensity = 0.5;
+        if (drops.length !== 100) initDrops(100);
+        overlay.style.opacity = 0.7;
+      } else {
+        rainIntensity = 0.85;
+        if (drops.length !== 200) initDrops(200);
+        overlay.style.opacity = 1;
+      }
+
+      // Border effects based on water level
+      if (level >= 15) {
+        border.className = 'border-danger';
+      } else if (level >= 7) {
+        border.className = 'border-warning';
+      } else {
+        border.className = '';
+        border.style.boxShadow = 'none';
+      }
+    }
+
+    // Lightning
+    let lightningTimer = null;
+    function triggerLightning() {
+      const el = document.getElementById('lightning');
+      el.style.background = 'rgba(255,255,255,0.12)';
+      setTimeout(() => { el.style.background = 'rgba(255,255,255,0)'; }, 80);
+      setTimeout(() => {
+        el.style.background = 'rgba(255,255,255,0.07)';
+        setTimeout(() => { el.style.background = 'rgba(255,255,255,0)'; }, 60);
+      }, 160);
+    }
+    function scheduleLightning(rain) {
+      if (lightningTimer) { clearTimeout(lightningTimer); lightningTimer = null; }
+      if (rain < 25) return;
+      const delay = 4000 + Math.random() * 8000 - (rain > 40 ? 3000 : 0);
+      lightningTimer = setTimeout(() => { triggerLightning(); scheduleLightning(rain); }, delay);
+    }
+
+    // ── LEAFLET MAPS & CLOUDS ──
+    const mapStyle = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const seoulLat = 37.5665, seoulLng = 126.9780;
+    const localLat = 37.5020, localLng = 127.0500; // default local
+
+    const map1 = L.map('localMap', { zoomControl: false, attributionControl: false }).setView([localLat, localLng], 14);
+    L.tileLayer(mapStyle).addTo(map1);
+    const localMarker = L.circleMarker([localLat, localLng], { color: '#ff003c', fillColor: '#ff003c', fillOpacity: 0.8, radius: 6 }).addTo(map1);
+
+    const map2 = L.map('seoulMap', { zoomControl: false, attributionControl: false }).setView([seoulLat, seoulLng], 11);
+    L.tileLayer(mapStyle).addTo(map2);
+
+    // Weather Radar Animator (Screen 1 style)
+    const P2 = new Uint8Array(512);
+    (function () { const p = Array.from({ length: 256 }, (_, i) => i); for (let i = 255; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[p[i], p[j]] = [p[j], p[i]]; } for (let i = 0; i < 512; i++)P2[i] = p[i & 255]; })();
+    function fd(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+    function lr(a, b, t) { return a + t * (b - a); }
+    function gr(h, x, y) { const v = h & 3; const u = v < 2 ? x : y; const w = v < 2 ? y : x; return ((h & 1) ? -u : u) + ((h & 2) ? -w : w); }
+    function n2(x, y) { const xi = Math.floor(x) & 255, yi = Math.floor(y) & 255; const xf = x - Math.floor(x), yf = y - Math.floor(y); const u = fd(xf), v = fd(yf); const aa = P2[P2[xi] + yi], ab = P2[P2[xi] + yi + 1], ba = P2[P2[xi + 1] + yi], bb = P2[P2[xi + 1] + yi + 1]; return lr(lr(gr(aa, xf, yf), gr(ba, xf - 1, yf), u), lr(gr(ab, xf, yf - 1), gr(bb, xf - 1, yf - 1), u), v); }
+    function fb(x, y, o) { let v = 0, a = 0.5, f = 1; for (let i = 0; i < o; i++) { v += a * n2(x * f, y * f); a *= 0.5; f *= 2.1; } return v; }
+
+    class WeatherRadarLayer {
+      constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.inset = '0';
+        this.canvas.style.zIndex = '900';
+        this.canvas.style.pointerEvents = 'none';
+        this.canvas.style.opacity = '0'; // default hidden
+        this.container.appendChild(this.canvas);
+
+        this.pt = Math.random() * 1000;
+        this.visible = false;
+
+        // screen 1 style full clouds (slowed down)
+        this.pc = [
+          { cx: -0.20, cy: 0.45, rx: 0.42, ry: 0.24, s: 1.00, vx: 0.00028, ph: 0.0 },
+          { cx: 0.35, cy: 0.52, rx: 0.46, ry: 0.26, s: 0.95, vx: 0.00024, ph: 1.2 },
+          { cx: 0.68, cy: 0.42, rx: 0.32, ry: 0.20, s: 0.85, vx: 0.00030, ph: 2.1 },
+          { cx: 0.18, cy: 0.32, rx: 0.26, ry: 0.15, s: 0.78, vx: 0.00022, ph: 0.6 },
+          { cx: 0.55, cy: 0.63, rx: 0.24, ry: 0.15, s: 0.72, vx: 0.00018, ph: 1.7 },
+          { cx: -0.12, cy: 0.70, rx: 0.22, ry: 0.13, s: 0.65, vx: 0.00032, ph: 3.1 },
+          { cx: 0.90, cy: 0.52, rx: 0.20, ry: 0.13, s: 0.60, vx: 0.00020, ph: 2.6 },
+          { cx: 0.45, cy: 0.27, rx: 0.28, ry: 0.16, s: 0.70, vx: 0.00025, ph: 0.9 },
+          { cx: 0.28, cy: 0.73, rx: 0.18, ry: 0.11, s: 0.55, vx: 0.00036, ph: 1.9 },
+        ];
+        this.run();
+      }
+      setRain(r) {
+        // ALWAYS visible, just vary opacity slightly
+        this.visible = true;
+        if (r < 3) { this.canvas.style.opacity = '0.50'; }
+        else if (r < 15) { this.canvas.style.opacity = '0.70'; }
+        else if (r < 30) { this.canvas.style.opacity = '0.82'; }
+        else { this.canvas.style.opacity = '0.92'; }
+      }
+      dc2(v) {
+        if (v < 0.08) return null;
+        if (v < 0.28) return [29, 168, 74, Math.round(v * 340)];
+        if (v < 0.44) return [100, 210, 50, Math.round(v * 310)];
+        if (v < 0.57) return [230, 220, 20, Math.round(v * 290)];
+        if (v < 0.70) return [240, 150, 10, Math.round(v * 270)];
+        if (v < 0.82) return [220, 40, 20, Math.round(v * 250)];
+        return [160, 0, 180, Math.round(v * 230)];
+      }
+      run() {
+        requestAnimationFrame(() => this.run());
+        if (!this.visible) {
+          const w = this.container.offsetWidth;
+          const h = this.container.offsetHeight;
+          if (w > 0 && h > 0 && this.canvas.width > 0) {
+            const ctx = this.canvas.getContext('2d');
+            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          }
+          return;
+        }
+
+        this.pt++;
+        const w = this.container.offsetWidth || 600;
+        const h = this.container.offsetHeight || 400;
+        if (w === 0 || h === 0) return;
+        if (this.canvas.width !== w || this.canvas.height !== h) {
+          this.canvas.width = w;
+          this.canvas.height = h;
+        }
+
+        const ctx = this.canvas.getContext('2d');
+        const id = ctx.createImageData(w, h);
+        const d = id.data;
+        const nt = this.pt * 0.00030; // slower noise time
+        const ns = 3.8;
+
+        for (let py = 0; py < h; py += 3) {
+          for (let px = 0; px < w; px += 3) {
+            const nx = px / w, ny = py / h;
+            let inf = 0;
+            for (const c of this.pc) {
+              const dx = (nx - c.cx) / c.rx, dy = (ny - c.cy) / c.ry;
+              const dist = dx * dx + dy * dy;
+              if (dist > 1.8) continue;
+              const base = Math.max(0, 1 - dist);
+              const turb = fb(nx * ns + nt * 1.2 + c.cx * 5, ny * ns + nt * 0.9 + c.cy * 5, 5);
+              inf += base * base * c.s * (0.80 + turb * 1.25);
+            }
+            inf = Math.min(1, inf);
+            const col = this.dc2(inf);
+            if (!col) continue;
+            for (let oy = 0; oy < 3 && py + oy < h; oy++) {
+              for (let ox = 0; ox < 3 && px + ox < w; ox++) {
+                const i = ((py + oy) * w + (px + ox)) * 4;
+                d[i] = col[0];
+                d[i + 1] = col[1];
+                d[i + 2] = col[2];
+                d[i + 3] = col[3];
+              }
+            }
+          }
+        }
+        for (const c of this.pc) {
+          c.cx += c.vx;
+          c.cy += Math.sin(this.pt * 0.02 + c.ph) * 0.0004;
+          if (c.cy < 0.05) c.cy = 0.05;
+          if (c.cy > 0.95) c.cy = 0.95;
+          if (c.cx > 1.4) c.cx -= 1.7;
+        }
+
+        const tmp = document.createElement('canvas');
+        tmp.width = w; tmp.height = h;
+        tmp.getContext('2d').putImageData(id, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+        ctx.filter = 'blur(4px)';
+        ctx.drawImage(tmp, 0, 0);
+        ctx.filter = 'none';
+      }
+    }
+
+    const localClouds = new WeatherRadarLayer('localCloudOverlay');
+    const seoulClouds = new WeatherRadarLayer('seoulCloudOverlay');
+
+    window.setMapClouds = function (rain) {
+      localClouds.setRain(rain);
+      seoulClouds.setRain(rain);
+    };
+
+    // Update center and marker color when receiving site data from screen 1
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'siteUpdate') {
+        if (e.data.siteInfo && e.data.siteInfo.loc) {
+          const loc = e.data.siteInfo.loc;
+          map1.setView(loc, 15);
+          localMarker.setLatLng(loc);
+        }
+        
+        // Update marker color based on fused danger level (f)
+        if (e.data.data && e.data.data.f !== undefined) {
+          const fused = e.data.data.f;
+          let markerColor = '#00d4ff'; // Normal (Cyan)
+          if (fused >= 15) markerColor = '#ff003c'; // Danger (Red)
+          else if (fused >= 7) markerColor = '#ffb300'; // Warning (Orange)
+          
+          localMarker.setStyle({ color: markerColor, fillColor: markerColor });
+        }
+      }
+    });
+
+    // ── Clock
+    setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false }); }, 1000);
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+
+    // Init
+    setCams(2);
+
+    // Ticks
+    setInterval(standaloneTick, 400);
+    setInterval(simWx, 2000);
+    simWx();
+  </script>
+</body>
+
+</html>

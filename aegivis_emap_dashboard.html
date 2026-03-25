@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegivis 3.0 - 통합 관제 e-Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0b1120;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        /* Map & Markers */
+        .e-map {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background: linear-gradient(145deg, #0f2340 0%, #0a1628 100%);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .map-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(56, 189, 248, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(56, 189, 248, 0.06) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .map-label {
+            position: absolute;
+            font-size: 10px;
+            color: rgba(148, 163, 184, 0.5);
+            font-family: monospace;
+        }
+
+        .map-marker {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+
+        .marker-ring {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #38bdf8;
+            background: #38bdf8;
+            transition: all 0.3s;
+        }
+
+        .map-marker.danger .marker-ring {
+            background: #ef4444;
+            border-color: #ef4444;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        .map-marker.caution .marker-ring {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            animation: pulse-amber 1.5s infinite;
+        }
+
+        .marker-tooltip {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #e2e8f0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .map-marker:hover .marker-tooltip {
+            opacity: 1;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7)
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0)
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0)
+            }
+        }
+
+        @keyframes pulse-amber {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7)
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(245, 158, 11, 0)
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0)
+            }
+        }
+
+        /* Camera Feed */
+        .cam-feed {
+            position: relative;
+            aspect-ratio: 16/9;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+            background: #000;
+        }
+
+        .cam-lbl {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.65);
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+            z-index: 5;
+        }
+
+        .ai-box {
+            position: absolute;
+            bottom: 6px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.65);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: monospace;
+            z-index: 5;
+            color: #34d399;
+        }
+
+        .rec {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: #ef4444;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0
+            }
+        }
+
+        /* Sensor bar */
+        .sensor-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: #1e293b;
+            overflow: hidden;
+        }
+
+        .sensor-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        /* Gauge */
+        .gauge-num {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Flip */
+        .flip {
+            transform: scaleX(-1);
+        }
+
+        .flip-inner {
+            transform: scaleX(-1);
+        }
+
+        /* Alert */
+        @keyframes alert-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5)
+            }
+
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 20px 5px rgba(239, 68, 68, 0.3)
+            }
+        }
+
+        .alert-card {
+            animation: alert-pulse 2s infinite;
+        }
+    </style>
+</head>
+
+<body class="p-3 md:p-5 flex flex-col min-h-screen">
+
+    <!-- HEADER -->
+    <header class="w-full flex flex-wrap justify-between items-center mb-4 glass p-4 rounded-xl gap-3">
+        <div class="flex items-center gap-4">
+            <h1
+                class="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+                Aegivis 3.0</h1>
+            <span class="text-slate-400 text-sm font-semibold">서울특별시 지하차도 통합 관제 e-Map</span>
+        </div>
+        <div class="flex gap-3 items-center flex-wrap">
+            <div id="weatherBox"
+                class="text-xs bg-slate-800 px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-2">
+                <i class="fas fa-cloud text-cyan-400"></i>
+                <span id="weatherStatus">기상청 연결 중...</span>
+            </div>
+            <div
+                class="text-emerald-400 bg-emerald-400/10 px-3 py-2 rounded-full text-xs font-bold border border-emerald-400/20 flex items-center">
+                <i class="fas fa-circle text-[8px] mr-2 animate-pulse"></i> 중앙서버 연결됨
+            </div>
+            <div id="clock"
+                class="font-mono text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-lg border border-slate-700">
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GRID -->
+    <main class="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+        <!-- LEFT: MAP + SITE LIST -->
+        <div class="lg:col-span-4 flex flex-col gap-4">
+
+            <!-- e-Map -->
+            <div class="glass p-4 rounded-xl">
+                <h2 class="text-sm font-bold text-slate-300 mb-3"><i
+                        class="fas fa-map-marked-alt text-blue-400 mr-2"></i>실시간 위험도 맵</h2>
+                <div class="e-map">
+                    <div class="map-grid"></div>
+                    <!-- Decorative district outlines (SVG) -->
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 380" fill="none">
+                        <text x="50" y="120" fill="rgba(148,163,184,0.25)" font-size="9">마포</text>
+                        <text x="145" y="100" fill="rgba(148,163,184,0.25)" font-size="9">종로</text>
+                        <text x="175" y="130" fill="rgba(148,163,184,0.25)" font-size="9">중구</text>
+                        <text x="175" y="170" fill="rgba(148,163,184,0.25)" font-size="9">용산</text>
+                        <text x="230" y="190" fill="rgba(148,163,184,0.25)" font-size="9">성동</text>
+                        <text x="250" y="240" fill="rgba(148,163,184,0.25)" font-size="9">강남</text>
+                        <text x="310" y="180" fill="rgba(148,163,184,0.25)" font-size="9">강동</text>
+                    </svg>
+
+                    <!-- Markers -->
+                    <div class="map-marker danger" style="left:52%;top:58%;" onclick="selectSite('gangnam')">
+                        <div class="marker-ring"></div>
+                        <div class="marker-tooltip">🔴 강남구 테헤란로 지하차도</div>
+                    </div>
+                    <div class="map-marker caution" style="left:46%;top:45%;" onclick="selectSite('yongsan')">
+                        <div class="marker-ring"></div>
+                        <div class="marker-tooltip">🟡 용산구 지하차도 B</div>
+                    </div>
+                    <div class="map-marker" id="m-mapo" style="left:22%;top:38%;" onclick="selectSite('mapo')">
+                        <div class="marker-ring"></div>
+                        <div class="marker-tooltip">🟢 마포구 성산 지하차도</div>
+                    </div>
+                    <div class="map-marker" style="left:78%;top:44%;" onclick="selectSite('gangdong')">
+                        <div class="marker-ring"></div>
+                        <div class="marker-tooltip">🟢 강동구 지하차도 D</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Site List -->
+            <div class="glass p-4 rounded-xl flex-grow overflow-y-auto">
+                <h2 class="text-sm font-bold text-slate-300 mb-3"><i class="fas fa-list-alt text-blue-400 mr-2"></i>위험
+                    감지 현황</h2>
+                <div class="space-y-2">
+                    <div class="p-3 rounded-lg border flex justify-between items-center cursor-pointer bg-rose-500/10 border-rose-500/40 hover:bg-rose-500/20 transition"
+                        onclick="selectSite('gangnam')">
+                        <div>
+                            <div class="text-rose-400 font-bold text-sm"><i
+                                    class="fas fa-exclamation-triangle mr-1"></i>[위험] 강남구</div>
+                            <div class="text-slate-300 text-xs mt-0.5">테헤란로 지하차도 · GN-UD-01</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-rose-400 font-mono text-lg font-bold" id="list-gangnam">--</div>
+                            <div class="text-slate-500 text-xs">cm</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-lg border flex justify-between items-center cursor-pointer bg-amber-500/10 border-amber-500/40 hover:bg-amber-500/20 transition"
+                        onclick="selectSite('yongsan')">
+                        <div>
+                            <div class="text-amber-400 font-bold text-sm"><i class="fas fa-bell mr-1"></i>[주의] 용산구</div>
+                            <div class="text-slate-300 text-xs mt-0.5">한강대교 북단 지하차도</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-amber-400 font-mono text-lg font-bold" id="list-yongsan">--</div>
+                            <div class="text-slate-500 text-xs">cm</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-lg border flex justify-between items-center cursor-pointer bg-slate-800 border-slate-700 hover:bg-slate-700 transition"
+                        onclick="selectSite('mapo')">
+                        <div>
+                            <div class="text-emerald-400 font-bold text-sm"><i class="fas fa-check-circle mr-1"></i>[정상]
+                                마포구</div>
+                            <div class="text-slate-300 text-xs mt-0.5">성산 지하차도</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-emerald-400 font-mono text-lg font-bold" id="list-mapo">--</div>
+                            <div class="text-slate-500 text-xs">cm</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-lg border flex justify-between items-center cursor-pointer bg-slate-800 border-slate-700 hover:bg-slate-700 transition"
+                        onclick="selectSite('gangdong')">
+                        <div>
+                            <div class="text-emerald-400 font-bold text-sm"><i class="fas fa-check-circle mr-1"></i>[정상]
+                                강동구</div>
+                            <div class="text-slate-300 text-xs mt-0.5">강동 지하차도 D</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-emerald-400 font-mono text-lg font-bold" id="list-gangdong">--</div>
+                            <div class="text-slate-500 text-xs">cm</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: DETAIL PANEL -->
+        <div class="lg:col-span-8 flex flex-col gap-4">
+
+            <!-- Site Header -->
+            <div class="glass p-4 rounded-xl flex justify-between items-center">
+                <div>
+                    <div class="text-xs text-slate-500 mb-1">선택된 관제 구역</div>
+                    <h2 class="text-xl font-extrabold text-white" id="siteTitle">강남구 테헤란로 지하차도</h2>
+                    <div class="text-xs text-slate-400 mt-1">ID: GN-UD-01 · 최근 업데이트: <span
+                            id="lastUpdate">--:--:--</span></div>
+                </div>
+                <button id="btnControl"
+                    class="bg-rose-600 hover:bg-rose-500 px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-rose-500/30 transition flex items-center gap-2"
+                    onclick="triggerManualControl()">
+                    <i class="fas fa-lock"></i> 차단막 수동 승인
+                </button>
+            </div>
+
+            <!-- 4 Camera Feeds -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="cam-feed">
+                    <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800"
+                        class="w-full h-full object-cover opacity-80">
+                    <div class="cam-lbl"><span class="rec"></span>CH 1 · 진입로 전방</div>
+                    <div class="ai-box" id="ai-box-1">AI: 수위 감지 중...</div>
+                </div>
+                <div class="cam-feed flip">
+                    <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=800"
+                        class="w-full h-full object-cover opacity-80">
+                    <div class="flip-inner cam-lbl"><span class="rec"></span>CH 2 · 진출로 전방</div>
+                </div>
+                <div class="cam-feed">
+                    <img src="https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&q=80&w=800"
+                        class="w-full h-full object-cover opacity-80">
+                    <div class="cam-lbl"><span class="rec"></span>CH 3 · 내부 좌측</div>
+                </div>
+                <div class="cam-feed flip">
+                    <img src="https://images.unsplash.com/photo-1621252179027-94459d278660?auto=format&fit=crop&q=80&w=800"
+                        class="w-full h-full object-cover opacity-80">
+                    <div class="flip-inner cam-lbl"><span class="rec"></span>CH 4 · 내부 우측</div>
+                </div>
+            </div>
+
+            <!-- Sensor Strip + Fusion Result -->
+            <div class="glass p-5 rounded-xl grid grid-cols-12 gap-5">
+
+                <!-- Sensors Column -->
+                <div class="col-span-12 md:col-span-7 space-y-4">
+                    <h3
+                        class="text-xs font-bold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-700">
+                        <i class="fas fa-satellite-dish text-blue-400 mr-2"></i>실시간 센서 데이터 (실황)</h3>
+
+                    <!-- Radar -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-slate-300 font-semibold">📡 80GHz 레이더</span>
+                            <span class="font-mono text-blue-400 gauge-num"><span id="radarVal">--</span> cm</span>
+                        </div>
+                        <div class="sensor-bar">
+                            <div id="radarBar" class="sensor-fill bg-blue-500" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <!-- Vision -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-slate-300 font-semibold">📷 AI 비전 카메라</span>
+                            <span class="font-mono text-indigo-400 gauge-num"><span id="visionVal">--</span> cm</span>
+                        </div>
+                        <div class="sensor-bar">
+                            <div id="visionBar" class="sensor-fill bg-indigo-500" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <!-- Level -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-slate-300 font-semibold">💧 접점 수위계</span>
+                            <span class="font-mono text-cyan-400 gauge-num"><span id="levelVal">--</span> cm</span>
+                        </div>
+                        <div class="sensor-bar">
+                            <div id="levelBar" class="sensor-fill bg-cyan-500" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <!-- Rain (from API) -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-slate-300 font-semibold">🌧️ 기상청 강수량</span>
+                            <span class="font-mono text-purple-400 gauge-num"><span id="rainVal">--</span> mm/h</span>
+                        </div>
+                        <div class="sensor-bar">
+                            <div id="rainBar" class="sensor-fill bg-purple-500" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 pt-1">* 센서 데이터는 300ms 간격으로 실시간 업데이트</div>
+                </div>
+
+                <!-- AI Verdict -->
+                <div class="col-span-12 md:col-span-5 bg-slate-900/80 rounded-xl border-2 flex flex-col justify-center items-center p-5 relative overflow-hidden transition-all duration-500"
+                    id="verdictCard">
+                    <div id="verdictGlow" class="absolute inset-0 opacity-20 transition-colors duration-500"></div>
+                    <div class="text-xs text-slate-500 tracking-widest z-10 mb-1 font-bold">퓨전 수위</div>
+                    <div class="z-10 flex items-baseline">
+                        <span id="fusedLevel"
+                            class="text-6xl font-black text-white gauge-num transition-all duration-300">--</span>
+                        <span class="text-2xl text-slate-400 ml-1">cm</span>
+                    </div>
+                    <div id="verdictBadge"
+                        class="z-10 mt-3 px-4 py-1.5 rounded-full text-sm font-bold text-slate-300 bg-slate-700 border border-slate-600 transition-all duration-300">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>초기화 중...
+                    </div>
+                    <div id="verdictPrediction" class="z-10 mt-3 text-xs text-center text-slate-400 w-full">AI 분석 로딩
+                        중...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ========================
+        // SITE PROFILES
+        // ========================
+        const sites = {
+            gangnam: {
+                title: '강남구 테헤란로 지하차도',
+                id: 'GN-UD-01',
+                radarBase: 16.0, visionBase: 17.2, levelBase: 15.0,
+                radarNoise: 1.5, visionNoise: 0.8, levelNoise: 0.5,
+                trend: 'rising'
+            },
+            yongsan: {
+                title: '용산구 한강대교 북단 지하차도',
+                id: 'YS-UD-03',
+                radarBase: 8.5, visionBase: 7.8, levelBase: 7.0,
+                radarNoise: 1.0, visionNoise: 0.7, levelNoise: 0.5,
+                trend: 'rising'
+            },
+            mapo: {
+                title: '마포구 성산 지하차도',
+                id: 'MP-UD-07',
+                radarBase: 1.2, visionBase: 0.8, levelBase: 0,
+                radarNoise: 0.8, visionNoise: 0.5, levelNoise: 0,
+                trend: 'stable'
+            },
+            gangdong: {
+                title: '강동구 지하차도 D',
+                id: 'GD-UD-12',
+                radarBase: 0.5, visionBase: 0.3, levelBase: 0,
+                radarNoise: 0.5, visionNoise: 0.3, levelNoise: 0,
+                trend: 'stable'
+            }
+        };
+
+        let currentSite = 'gangnam';
+        let weatherRain = 0;
+        let iteration = 0;
+        let siteData = { gangnam: {}, yongsan: {}, mapo: {}, gangdong: {} };
+
+        // ========================
+        // WEATHER API
+        // ========================
+        async function fetchWeather() {
+            try {
+                // Try our own local Flask server first (when running as .exe)
+                const res = await fetch('/api/weather', { signal: AbortSignal.timeout(3000) });
+                const d = await res.json();
+                weatherRain = d.rain_mm || 0;
+                document.getElementById('weatherStatus').innerHTML = `<i class="fas fa-check-circle text-emerald-400 mr-1"></i> 기상청 실황: ${d.status} · ${d.temperature}°C · ${d.rain_mm}mm/h`;
+            } catch {
+                // Standalone HTML: simulate weather
+                weatherRain = 0;
+                document.getElementById('weatherStatus').innerHTML = `<i class="fas fa-wifi text-slate-400 mr-1"></i> 기상청 시뮬 모드 · 맑음`;
+            }
+        }
+
+        // ========================
+        // SENSOR SIMULATION ENGINE
+        // ========================
+        function jitter(base, noise, iteration, trend) {
+            const wave = Math.sin(iteration * 0.12) * noise * 0.4;
+            const micro = (Math.random() - 0.5) * noise * 0.6;
+            const rise = trend === 'rising' ? iteration * 0.008 : 0;
+            return Math.max(0, base + wave + micro + rise);
+        }
+
+        function setBar(id, val, max) {
+            const pct = Math.min(100, (val / max) * 100);
+            document.getElementById(id).style.width = pct + '%';
+            if (pct > 66) document.getElementById(id).className = 'sensor-fill h-full rounded-md transition-all bg-rose-500';
+            else if (pct > 40) document.getElementById(id).className = 'sensor-fill h-full rounded-md transition-all bg-amber-500';
+        }
+
+        function calcFusion(r, v, l, rain) {
+            let base = (r * 0.3) + (v * 0.5) + (l * 0.2);
+            // weather weight
+            if (rain >= 30) base *= 1.2;
+            else if (rain >= 10) base *= 1.1;
+            return base;
+        }
+
+        function updateSite(siteKey) {
+            const s = sites[siteKey];
+            const r = jitter(s.radarBase, s.radarNoise, iteration, s.trend);
+            const v = jitter(s.visionBase, s.visionNoise, iteration, s.trend);
+            const l = jitter(s.levelBase, s.levelNoise, iteration, s.trend);
+            const fused = calcFusion(r, v, l, weatherRain);
+
+            siteData[siteKey] = { r, v, l, fused };
+
+            // Update list values
+            const listEl = document.getElementById(`list-${siteKey}`);
+            if (listEl) listEl.innerText = fused.toFixed(1);
+        }
+
+        function renderCurrentSite() {
+            const d = siteData[currentSite];
+            if (!d.r && d.r !== 0) return;
+
+            document.getElementById('radarVal').innerText = d.r.toFixed(1);
+            document.getElementById('visionVal').innerText = d.v.toFixed(1);
+            document.getElementById('levelVal').innerText = d.l.toFixed(1);
+            document.getElementById('rainVal').innerText = weatherRain.toFixed(1);
+            document.getElementById('fusedLevel').innerText = d.fused.toFixed(1);
+            document.getElementById('ai-box-1').innerText = `AI: 수위 ${d.v.toFixed(1)}cm 인식`;
+
+            setBar('radarBar', d.r, 30);
+            setBar('visionBar', d.v, 30);
+            setBar('levelBar', d.l, 20);
+            setBar('rainBar', weatherRain, 60);
+
+            document.getElementById('lastUpdate').innerText = new Date().toTimeString().slice(0, 8);
+
+            // Verdict
+            const fused = d.fused;
+            const verdictCard = document.getElementById('verdictCard');
+            const verdictGlow = document.getElementById('verdictGlow');
+            const verdictBadge = document.getElementById('verdictBadge');
+            const verdictPrediction = document.getElementById('verdictPrediction');
+            const btnControl = document.getElementById('btnControl');
+
+            // False alarm: radar high but vision & level low
+            if (d.r > 8 && d.v < 2 && d.l < 2) {
+                verdictCard.className = verdictCard.className.replace(/border-\S+/g, '') + ' border-2 border-amber-500/60 transition-all duration-500';
+                verdictGlow.className = 'absolute inset-0 opacity-20 bg-amber-500 transition-colors duration-500';
+                verdictBadge.innerHTML = `<i class="fas fa-shield-alt mr-1"></i> 오보 차단 (False Alarm)`;
+                verdictBadge.className = 'z-10 mt-3 px-4 py-1.5 rounded-full text-sm font-bold text-amber-300 bg-amber-500/20 border border-amber-500/50 transition-all duration-300';
+                verdictPrediction.innerText = '레이더 노이즈 감지, 비전·수위계 교차검증 통과. 오보 차단.';
+                btnControl.classList.remove('bg-rose-600', 'animate-pulse');
+                btnControl.classList.add('bg-slate-600');
+            } else if (fused >= 15) {
+                verdictCard.className = 'col-span-12 md:col-span-5 bg-slate-900/80 rounded-xl border-2 border-rose-500 flex flex-col justify-center items-center p-5 relative overflow-hidden alert-card transition-all duration-500';
+                verdictGlow.className = 'absolute inset-0 opacity-30 bg-rose-600 transition-colors duration-500';
+                verdictBadge.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> 통제 기준 초과!`;
+                verdictBadge.className = 'z-10 mt-3 px-4 py-1.5 rounded-full text-sm font-bold text-white bg-rose-500 shadow-lg shadow-rose-500/50 transition-all duration-300';
+                verdictPrediction.innerText = '즉시 경찰 협조 및 차단막 수동 승인이 필요합니다.';
+                btnControl.classList.remove('bg-slate-600', 'bg-amber-600');
+                btnControl.classList.add('bg-rose-600', 'animate-pulse');
+            } else if (fused >= 7) {
+                verdictCard.className = 'col-span-12 md:col-span-5 bg-slate-900/80 rounded-xl border-2 border-amber-500/50 flex flex-col justify-center items-center p-5 relative overflow-hidden transition-all duration-500';
+                verdictGlow.className = 'absolute inset-0 opacity-15 bg-amber-500 transition-colors duration-500';
+                verdictBadge.innerHTML = `<i class="fas fa-bell mr-1"></i> 주의 (15cm 임박)`;
+                verdictBadge.className = 'z-10 mt-3 px-4 py-1.5 rounded-full text-sm font-bold text-amber-200 bg-amber-600 transition-all duration-300';
+                verdictPrediction.innerText = `딥러닝 예측: 약 ${Math.max(3, Math.floor((15 - fused) / 0.3))}분 내 통제 기준 도달.`;
+                btnControl.classList.remove('bg-rose-600', 'animate-pulse', 'bg-slate-600');
+                btnControl.classList.add('bg-amber-600');
+            } else {
+                verdictCard.className = 'col-span-12 md:col-span-5 bg-slate-900/80 rounded-xl border-2 border-slate-700 flex flex-col justify-center items-center p-5 relative overflow-hidden transition-all duration-500';
+                verdictGlow.className = 'absolute inset-0 opacity-10 bg-blue-500 transition-colors duration-500';
+                verdictBadge.innerHTML = `<i class="fas fa-check-circle mr-1"></i> 정상 (대기)`;
+                verdictBadge.className = 'z-10 mt-3 px-4 py-1.5 rounded-full text-sm font-bold text-slate-300 bg-slate-700 border border-slate-600 transition-all duration-300';
+                verdictPrediction.innerText = 'AI 감시 중. 노면 상태 안정적.';
+                btnControl.classList.remove('bg-rose-600', 'animate-pulse', 'bg-amber-600');
+                btnControl.classList.add('bg-slate-600');
+            }
+        }
+
+        function selectSite(siteKey) {
+            currentSite = siteKey;
+            document.getElementById('siteTitle').innerText = sites[siteKey].title;
+            renderCurrentSite();
+        }
+
+        function triggerManualControl() {
+            const d = siteData[currentSite];
+            if (!d || d.fused < 7) {
+                alert('현재 수위가 낮아 차단막 발동이 필요하지 않습니다.');
+                return;
+            }
+            if (confirm(`[차단막 수동 승인]\n\n현장: ${sites[currentSite].title}\n현재 수위: ${d.fused.toFixed(1)} cm\n\n승인 시 현장 PLC로 차단막 하강 명령이 전달됩니다.\n계속하시겠습니까?`)) {
+                alert('✅ 통제 승인 완료\n현장 PLC 제어기에 차단막 하강 명령이 전송되었습니다.\nVMS 전광판 및 경보음이 자동으로 활성화됩니다.');
+            }
+        }
+
+        // Clock
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        }
+
+        // ========================
+        // MAIN LOOP
+        // ========================
+        async function mainLoop() {
+            iteration++;
+
+            // Update all sites in background
+            Object.keys(sites).forEach(updateSite);
+
+            // Render selected site
+            renderCurrentSite();
+        }
+
+        // Init
+        fetchWeather(); // Initial weather fetch
+        setInterval(fetchWeather, 60000); // Refresh weather every 60 seconds
+        setInterval(mainLoop, 300); // Sensor update every 300ms
+        setInterval(updateClock, 1000); // Clock every second
+        updateClock();
+        mainLoop(); // Start immediately
+    </script>
+</body>
+
+</html>

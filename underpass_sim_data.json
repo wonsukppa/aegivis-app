@@ -1,0 +1,13 @@
+{
+    "timestamp": "2026-03-05 12:27:08",
+    "sim_time": 300,
+    "actual_level": 97.91,
+    "radar_reading": 99.51,
+    "vision_reading": 88.44,
+    "fused_level": 93.98,
+    "error_margin_mm": 8.19,
+    "learning_iterations": 5,
+    "is_raining": false,
+    "rainfall_rate": 0.0,
+    "time_to_evac": "N/A"
+}

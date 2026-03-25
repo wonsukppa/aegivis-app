@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aegivis 3.0 Mobile Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #05070a;
+            --card-bg: #0f172a;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --accent-green: #10b981;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Mobile Container */
+        #app-container {
+            width: 100%;
+            max-width: 450px;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+            color: var(--accent-blue);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        /* Dashboard */
+        .dashboard-content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Filter Chips */
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .chip.active {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* Site Cards */
+        .site-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .site-card:active {
+            transform: scale(0.98);
+        }
+
+        .site-card.critical {
+            border-left: 4px solid var(--accent-red);
+        }
+        
+        .site-card.warning {
+            border-left: 4px solid var(--accent-yellow);
+        }
+
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .site-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .site-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .site-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .critical-badge {
+            background-color: var(--accent-red);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        /* Detail Screen */
+        #detail-screen, #qr-screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 200;
+            flex-direction: column;
+        }
+
+        .detail-header {
+            padding: 20px;
+            background-color: var(--card-bg);
+            display: flex;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .sensor-chart {
+            height: 180px;
+            margin: 20px;
+            background: linear-gradient(0deg, rgba(59, 130, 246, 0.1), transparent);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+            gap: 5px;
+        }
+
+        .bar {
+            flex: 1;
+            background-color: var(--accent-blue);
+            border-radius: 2px 2px 0 0;
+            transition: 1s;
+        }
+
+        .ai-panel {
+            margin: 20px;
+            padding: 16px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent-blue);
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .ai-title {
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .ai-msg {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .dispatch-footer {
+            margin-top: auto;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-dispatch {
+            width: 100%;
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            background-color: var(--accent-red);
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        /* QR Simulation Screen */
+        .qr-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .qr-frame {
+            width: 250px;
+            height: 250px;
+            border: 2px solid var(--accent-blue);
+            border-radius: 20px;
+            position: relative;
+            margin-bottom: 30px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qr-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-blue);
+            box-shadow: 0 0 15px var(--accent-blue);
+            top: 0;
+            animation: scan 2s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .success-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(16, 185, 129, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .check-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Dashboard Screen -->
+        <div id="dashboard-screen">
+            <header>
+                <div class="logo">AEGIVIS 3.0</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                    <span class="status-dot"></span> 동기화 중...
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <div class="section-title">통합 관제 대시보드 (서울시)</div>
+                
+                <div class="filter-container">
+                    <div class="chip active">전체</div>
+                    <div class="chip">심각 (2)</div>
+                    <div class="chip">경고 (4)</div>
+                    <div class="chip">정상 (12)</div>
+                </div>
+
+                <div id="site-list">
+                    <!-- Site 1 -->
+                    <div class="site-card critical" onclick="openDetail('세종로 지하차도', '심각', '0.85m')">
+                        <div class="critical-badge">IMMEDIATE DISPATCH</div>
+                        <div class="site-header">
+                            <div class="site-name">세종로 지하차도</div>
+                            <div class="site-tag">서울 중구</div>
+                        </div>
+                        <div class="site-stats">
+                            <div class="stat-item">현재 수위<br><span class="stat-value" style="color: var(--accent-red)">0.85m</span></div>
+                            <div class="stat-item">침수 위험도<br><span class="stat-value">94%</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Site 2 -->
+                    <div class="site-card warning" onclick="openDetail('노량진 1 지하차도', '경고', '0.42m')">
+                        <div class="site-header">
+                            <div class="site-name">노량진 1 지하차도</div>
+                            <div class="site-tag">서울 동작구</div>
+                        </div>
+                        <div class="site-stats">
+                            <div class="stat-item">현재 수위<br><span class="stat-value" style="color: var(--accent-yellow)">0.42m</span></div>
+                            <div class="stat-item">침수 위험도<br><span class="stat-value">62%</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Site 3 -->
+                    <div class="site-card" onclick="openDetail('강남역 인근 램프', '정상', '0.05m')">
+                        <div class="site-header">
+                            <div class="site-name">강남역 인근 램프</div>
+                            <div class="site-tag">서울 강남구</div>
+                        </div>
+                        <div class="site-stats">
+                            <div class="stat-item">현재 수위<br><span class="stat-value">0.05m</span></div>
+                            <div class="stat-item">침수 위험도<br><span class="stat-value">4%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Screen -->
+        <div id="detail-screen">
+            <div class="detail-header">
+                <button class="back-btn" onclick="goBack()">←</button>
+                <div id="detail-title" style="font-weight: 700; font-size: 1.1rem;">현장 상세</div>
+            </div>
+            
+            <div style="padding: 0 20px; margin-top: 10px;">
+                <h3 style="font-size: 0.9rem; color: var(--accent-blue); margin-bottom: 5px;">실시간 수위 센서 데이터 (cm)</h3>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">지난 10분간의 수위 변화 추이입니다.</p>
+            </div>
+            
+            <div class="sensor-chart" id="chart" style="position: relative;">
+                <!-- Threshold Line -->
+                <div style="position: absolute; width: 100%; height: 2px; background: var(--accent-red); bottom: 80%; opacity: 0.5; z-index: 5;">
+                    <span style="position: absolute; right: 0; top: -15px; font-size: 0.65rem; color: var(--accent-red);">위험 수위 (80cm)</span>
+                </div>
+                <!-- Bars dynamic -->
+            </div>
+
+            <div class="ai-panel">
+                <div class="ai-title">🤖 AI 의사결정 분석</div>
+                <div class="ai-msg" id="ai-msg">
+                    현장 데이터를 분석 중입니다...
+                </div>
+            </div>
+
+            <div style="padding: 0 20px;">
+                <h3 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px;">현장 실시간 지표</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">예상 침수 시각</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-red);">+14분 후</div>
+                    </div>
+                    <div style="background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">강수량 (강남구)</div>
+                        <div style="font-size: 1.2rem; font-weight: 700;">45mm/h</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dispatch-footer">
+                <button class="btn-dispatch" onclick="openQR()">출동 수락 및 현장 이동</button>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.75rem; margin-top: 10px;">
+                    출동 시 개인 안전 장구를 반드시 착용하십시오.
+                </p>
+            </div>
+        </div>
+
+        <!-- QR Screen -->
+        <div id="qr-screen">
+            <div class="detail-header">
+                <button class="back-btn" onclick="cancelQR()">×</button>
+                <div style="font-weight: 700; font-size: 1.1rem;">현장 장비 인증 (QR)</div>
+            </div>
+
+            <div class="qr-placeholder">
+                <div style="margin-bottom: 20px; font-size: 0.95rem;">
+                    현장 제어함 내부에 부착된 <br><b>[Aegivis 전용 QR 코드]</b>를 스캔하세요.
+                </div>
+                <div class="qr-frame" onclick="simulateSuccess()">
+                    <div class="qr-line"></div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=AEGIVIS-AUTH-TOKEN-777" alt="QR">
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.8rem;">
+                    이 단계는 현장 요원의 도착을 물리적으로 증명하며, <br>증명 시에만 현장 제어 인터페이스가 활성화됩니다.
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Overlay -->
+        <div class="success-overlay" id="success-overlay">
+            <div class="check-icon">✓</div>
+            <h2 style="margin: 0;">현장 도착 확인됨</h2>
+            <p>디바이스 토큰이 갱신되었습니다. 제어 권한을 획득합니다.</p>
+            <button onclick="location.reload()" style="background: white; color: var(--accent-green); border: none; padding: 12px 30px; border-radius: 25px; font-weight: 700; margin-top: 20px;">대시보드로 돌아가기</button>
+        </div>
+
+    </div>
+
+    <script>
+        function openDetail(name, status, water) {
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('detail-screen').style.display = 'flex';
+            document.getElementById('detail-title').innerText = name;
+            
+            // AI Analysis text matching
+            const aiLabel = document.getElementById('ai-msg');
+            if (status === '심각') {
+                aiLabel.innerHTML = `<span style="color: var(--accent-red); font-weight: 700;">[긴급]</span> 인근 우수관 역류가 감지되었습니다. 10분 내 차단벽이 자동 작동할 예정입니다. 즉시 현장에 도착하여 수동 조작 레버를 확보하십시오.`;
+            } else {
+                aiLabel.innerHTML = `현재 수위는 안정적이지만 강우 강도가 높아지고 있습니다. 예비 출동 준비를 권고합니다.`;
+            }
+
+            // Generate fake chart bars
+            const chart = document.getElementById('chart');
+            chart.innerHTML = '';
+            for (let i = 0; i < 20; i++) {
+                const height = Math.random() * 80 + 20;
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = '0%';
+                chart.appendChild(bar);
+                setTimeout(() => {
+                    bar.style.height = height + '%';
+                    if (height > 70) bar.style.backgroundColor = 'var(--accent-red)';
+                }, i * 50);
+            }
+        }
+
+        function goBack() {
+            document.getElementById('dashboard-screen').style.display = 'block';
+            document.getElementById('detail-screen').style.display = 'none';
+        }
+
+        function openQR() {
+            document.getElementById('qr-screen').style.display = 'flex';
+        }
+
+        function cancelQR() {
+            document.getElementById('qr-screen').style.display = 'none';
+        }
+
+        function simulateSuccess() {
+            document.getElementById('success-overlay').style.display = 'flex';
+        }
+
+        // Add some micro-animations toggle
+        setInterval(() => {
+            const dot = document.querySelector('.status-dot');
+            dot.style.opacity = dot.style.opacity === '0' ? '1' : '0';
+        }, 1000);
+    </script>
+</body>
+</html>

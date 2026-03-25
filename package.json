@@ -1,0 +1,16 @@
+{
+  "name": "94f7ec5e-fd49-47ae-8121-e8a77f6fec78",
+  "version": "1.0.0",
+  "description": "",
+  "main": "yumin_bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "telegraf": "^4.16.3"
+  }
+}

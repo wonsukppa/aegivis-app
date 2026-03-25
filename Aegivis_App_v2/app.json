@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Aegivis 3.0",
+    "slug": "aegivis-mobile",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "platforms": ["ios", "android"],
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#020408"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "이지비스 3.0 (Aegivis)",
+  "short_name": "이지비스",
+  "description": "지하차도 침수 예측 및 AI 통합 관제 시스템",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
