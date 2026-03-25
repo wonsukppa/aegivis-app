@@ -1207,26 +1207,36 @@
         let cameraType = 'before';
 
         function startReportingStep() {
-            successOverlay.classList.add('hidden');
-            successOverlay.classList.remove('opacity-100'); // Clean up opacity too
-            
-            // Switch to detail view of the current site if not already there
-            dashboardView.classList.add('hidden');
-            detailView.classList.remove('hidden');
-            
-            document.getElementById('evidence-section').classList.remove('hidden');
-            currentReportStep = 'arrived';
-            updateActionBtnForReporting();
-            
-            // Log to HQ
-            const hqLog = document.getElementById('hq-log');
-            if (hqLog) {
-                hqLog.innerHTML = `<p class="text-emerald-400 font-bold">● [${currentSiteName}] 요원 현장 도착 및 인증 완료 (증거수합 시작)</p>` + hqLog.innerHTML;
-            }
+            console.log("Starting reporting step...");
+            successOverlay.classList.remove('opacity-100');
+            setTimeout(() => {
+                successOverlay.classList.add('hidden');
+                
+                // Show detail view and evidence section
+                hideAllViews();
+                detailView.classList.remove('hidden');
+                document.getElementById('evidence-section').classList.remove('hidden');
+                
+                currentReportStep = 'arrived';
+                updateActionBtnForReporting();
+                
+                // Log to HQ
+                const hqLog = document.getElementById('hq-log');
+                if (hqLog) {
+                    hqLog.innerHTML = `<p class="text-emerald-400 font-bold">● [${currentSiteName}] 요원 현장 도착 및 인증 완료 (증거수합 시작)</p>` + hqLog.innerHTML;
+                }
 
-            // Ensure scroll to bottom to see evidence section
-            const scrollArea = document.getElementById('scroll-area');
-            if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+                // Ensure scroll with delay to handle DOM rendering
+                setTimeout(() => {
+                    const scrollArea = document.getElementById('scroll-area');
+                    if (scrollArea) {
+                        scrollArea.scrollTo({
+                            top: scrollArea.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 300);
+            }, 300);
         }
 
         function updateActionBtnForReporting() {
@@ -1270,22 +1280,37 @@
         }
 
         function capturePhoto() {
-            // Simulate capture with a flash effect
             const overlay = document.getElementById('camera-overlay');
+            const shutter = overlay.querySelector('.rounded-full.border-4');
+            
+            // Shutter animation
+            shutter.classList.add('scale-75', 'opacity-50');
             overlay.classList.add('bg-white');
+            
             setTimeout(() => {
                 overlay.classList.remove('bg-white');
+                shutter.classList.remove('scale-75', 'opacity-50');
                 overlay.classList.add('hidden');
                 
                 // Show photo in slot
                 const imgId = cameraType === 'before' ? 'img-before' : 'img-after';
                 const checkId = cameraType === 'before' ? 'check-before' : 'check-after';
+                const slotId = cameraType === 'before' ? 'photo-before-slot' : 'photo-after-slot';
+                
                 const img = document.getElementById(imgId);
+                const placeholder = img.nextElementSibling; // The icon placeholder
+                
+                // Randomized field photos (simulated)
                 img.src = cameraType === 'before' ? 
                     "https://images.unsplash.com/photo-1542128962-9d50ad7bf714?q=80&w=400" : 
-                    "https://images.unsplash.com/photo-1510156905531-15b6d5952d9b?q=80&w=400";
-                img.classList.remove('hidden');
-                document.getElementById(checkId).classList.remove('hidden');
+                    "https://images.unsplash.com/photo-1582234033100-2e06c9a81fb6?q=80&w=400";
+                
+                img.onload = () => {
+                    img.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                    document.getElementById(checkId).classList.remove('hidden');
+                    document.getElementById(slotId).classList.add('ring-2', 'ring-emerald-500');
+                };
 
                 // Update step
                 if (cameraType === 'before') {
@@ -1300,8 +1325,8 @@
                 // Update log
                 const log = document.getElementById('report-log');
                 const time = new Date().toLocaleTimeString();
-                log.innerHTML += `<p class="text-blue-400">[${time}] 사진 수집 완료: ${cameraType === 'before' ? '조작전' : '조작후'}</p>`;
-            }, 150);
+                log.innerHTML += `<p class="text-blue-400 font-bold">✓ [${time}] ${cameraType === 'before' ? '조작전' : '조작후'} 사진 수집 완료</p>`;
+            }, 300);
         }
 
         function completeOperation() {
