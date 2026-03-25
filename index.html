@@ -640,11 +640,15 @@
                     <div class="glass rounded-2xl overflow-hidden divide-y divide-white/5">
                         <div class="p-4 flex justify-between items-center text-xs">
                             <span class="text-slate-400 font-bold">시스템 버전</span>
-                            <span class="text-white font-mono">v3.1.0-push-optimized</span>
+                            <span class="text-white font-mono">v3.1.2-cache-nuclear</span>
                         </div>
                         <div class="p-4 flex justify-between items-center text-xs">
                             <span class="text-slate-400 font-bold">최근 동기화</span>
                             <span class="text-emerald-400 font-bold">방금 전 (SUCCESS)</span>
+                        </div>
+                        <div class="p-4 flex justify-between items-center text-xs active:bg-blue-500/20 cursor-pointer" onclick="forcePurgeCache()">
+                            <span class="text-blue-400 font-bold">시스템 캐시 강제 초기화</span>
+                            <i class="fas fa-sync-alt text-blue-500 animate-spin-slow"></i>
                         </div>
                     </div>
                     
@@ -1131,7 +1135,22 @@
             }
         }
 
-        // Check permission on load
+        function forcePurgeCache() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    });
+                    alert('시스템 캐시가 초기화되었습니다. 확인을 누르면 최신 버전으로 재접속합니다.');
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
+            }
+        }
         if ('Notification' in window) {
             // Initial check when the script loads
             // The actual UI update will happen when showNotifications() is called
