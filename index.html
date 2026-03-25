@@ -1038,7 +1038,10 @@
                 dispatchAccepted = true;
                 unlockQRButton();
 
-                document.getElementById('action-hint').innerHTML = `<span class="text-emerald-400 font-bold">● 상황실 통보 와료</span> — 현장 도착 시 하단 초록 QR 버튼으로 도착 인증을 해주세요.`;
+                // Hide bulky action bar once accepted to reveal navigation and the new QR button
+                actionBar.classList.add('hidden');
+                
+                document.getElementById('action-hint').innerHTML = `<span class="text-emerald-400 font-bold">● 상황실 통보 완료</span> — 현장 도착 시 하단 초록 QR 버튼으로 도착 인증을 해주세요.`;
             }, 1500);
         }
 
