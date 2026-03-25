@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>이지비스 3.0 | 통합 관제 프로토타입</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
     <meta name="theme-color" content="#0f172a">
     <style>
         body {
@@ -689,7 +689,7 @@
         </div>
 
         <!-- NAVIGATION BAR (Fixed) -->
-        <nav id="bottom-nav" class="absolute bottom-0 left-0 right-0 h-20 glass border-t border-white/5 flex justify-around items-center px-8 z-30">
+        <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 glass-dark border-t border-white/10 px-6 flex justify-between items-center z-50">
             <i id="nav-dashboard" class="fas fa-th-large text-blue-500 transition-colors cursor-pointer" onclick="showDashboard()"></i>
             <i id="nav-monitoring" class="fas fa-stream text-slate-600 transition-colors cursor-pointer" onclick="showMonitoring()"></i>
             <!-- Floating QR Scan Trigger (locked until dispatch accepted) -->
@@ -793,7 +793,33 @@
         let currentSiteName = "";
         let currentAgentId = "";
         let dispatchAccepted = false;
+    </script>
+    <style>
+        /* Bottom Navigation Safe Area */
+        nav {
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+            height: calc(70px + env(safe-area-inset-bottom, 16px));
+        }
+        
+        /* Adjust content padding to prevent bottom cut */
+        #dashboard-view, #monitoring-view, #notifications-view, #settings-view {
+            padding-bottom: calc(100px + env(safe-area-inset-bottom, 16px));
+        }
 
+        /* Bottom Navigation Safe Area Optimization */
+        #bottom-nav {
+            padding-bottom: env(safe-area-inset-bottom, 16px) !important;
+            height: calc(85px + env(safe-area-inset-bottom, 0px)) !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        #bottom-nav i {
+            margin-bottom: env(safe-area-inset-bottom, 8px); /* Push icons up slightly */
+        }
+    </style>
+    <script>
         function hideAllViews() {
             [dashboardView, detailView, scannerView, monitoringView, notificationsView, settingsView].forEach(v => {
                 if (v) {
@@ -841,6 +867,10 @@
             headerSub.innerText = "시스템 긴급 경보";
             document.getElementById('nav-notifications').classList.add('nav-active');
             backBtn.classList.remove('hidden');
+            // Check notification permission status when showing the view
+            if ('Notification' in window) {
+                updateNotificationUI(Notification.permission);
+            }
         }
 
         function showSettings() {
@@ -1018,6 +1048,102 @@
                 return;
             }
             openScanner();
+        }
+
+        // --- PWA Push Notification Logic ---
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                alert('이 브라우저는 알림 기능을 지원하지 않습니다.');
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                updateNotificationUI(permission);
+                if (permission === 'granted') {
+                    new Notification('이지비스 3.0', {
+                        body: '이제 긴급 알림을 실시간으로 수신할 수 있습니다.',
+                        icon: './icons/icon-192.png'
+                    });
+                }
+            });
+        }
+
+        function updateNotificationUI(permission) {
+            const btn = document.getElementById('notif-btn');
+            const status = document.getElementById('notif-status');
+            if (permission === 'granted') {
+                btn.innerText = '승인됨';
+                btn.className = 'bg-emerald-600 text-white text-[10px] px-3 py-1.5 rounded-full font-bold cursor-default';
+                btn.onclick = null;
+                status.innerText = '알림 서비스가 활성화되어 있습니다.';
+                status.classList.replace('text-slate-500', 'text-emerald-400');
+            } else if (permission === 'denied') {
+                btn.innerText = '차단됨';
+                btn.className = 'bg-red-600 text-white text-[10px] px-3 py-1.5 rounded-full font-bold';
+                status.innerText = '브라우저 설정에서 알림 권한을 허용해 주세요.';
+                status.classList.replace('text-slate-500', 'text-red-400');
+            }
+        }
+
+        function triggerDispatchNudge() {
+            if (Notification.permission === 'granted') {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification('🚨 [긴급 호출] 미수락 출동 건 확인 요망', {
+                            body: '이지비스 상황실: 세종로 현장 출동이 지연되고 있습니다. 즉시 앱에서 [출동 수락] 버튼을 눌러주세요!',
+                            icon: './icons/icon-192.png',
+                            badge: './icons/icon-192.png',
+                            tag: 'dispatch-nudge',
+                            renotify: true,
+                            vibrate: [1000, 200, 1000, 200, 1000],
+                            data: { url: window.location.href }
+                        });
+                    });
+                }
+            } else {
+                alert('먼저 알림 권한을 승인해 주세요!');
+            }
+        }
+
+        function triggerTestNotification() {
+            if (Notification.permission === 'granted') {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification('🚨 [긴급] 수위 초과 알림 (테스트)', {
+                            body: '세종로 지하차도 수위가 15cm를 초과했습니다. 즉시 출동 바랍니다!',
+                            icon: './icons/icon-192.png',
+                            badge: './icons/icon-192.png',
+                            vibrate: [500, 100, 500, 100, 500],
+                            data: { url: window.location.href }
+                        });
+                    });
+                }
+            } else {
+                alert('먼저 알림 권한을 승인해 주세요!');
+            }
+        }
+                            icon: './icons/icon-192.png',
+                            badge: './icons/icon-192.png',
+                            vibrate: [500, 110, 500, 110, 450, 110, 200, 110, 170, 40, 450, 110, 200, 110, 170, 40],
+                            data: { url: window.location.href }
+                        });
+                    });
+                } else {
+                    new Notification('🚨 [긴급] 테스트 알림', {
+                        body: '서비스 워커가 아직 활성화되지 않았습니다. 일반 알림으로 발송합니다.',
+                        icon: './icons/icon-192.png'
+                    });
+                }
+            } else {
+                alert('먼저 알림 권한을 승인해 주세요!');
+            }
+        }
+
+        // Check permission on load
+        if ('Notification' in window) {
+            // Initial check when the script loads
+            // The actual UI update will happen when showNotifications() is called
+            // or if the user interacts with the permission button.
         }
 
         function unlockQRButton() {
