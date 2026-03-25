@@ -1215,7 +1215,8 @@
                 // Show detail view and evidence section
                 hideAllViews();
                 detailView.classList.remove('hidden');
-                document.getElementById('evidence-section').classList.remove('hidden');
+                const evidenceSec = document.getElementById('evidence-section');
+                evidenceSec.classList.remove('hidden');
                 
                 currentReportStep = 'arrived';
                 updateActionBtnForReporting();
@@ -1226,15 +1227,25 @@
                     hqLog.innerHTML = `<p class="text-emerald-400 font-bold">● [${currentSiteName}] 요원 현장 도착 및 인증 완료 (증거수합 시작)</p>` + hqLog.innerHTML;
                 }
 
-                // Ensure scroll with delay to handle DOM rendering
+                // 모바일 호환성 (Old iOS 등) 을 고려한 강력한 스크롤 구현
                 setTimeout(() => {
-                    const scrollArea = document.getElementById('scroll-area');
-                    if (scrollArea) {
-                        scrollArea.scrollTo({
-                            top: scrollArea.scrollHeight,
-                            behavior: 'smooth'
-                        });
+                    if (evidenceSec) {
+                        try {
+                            evidenceSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (e) {
+                            // Fallback
+                            const scrollArea = document.getElementById('scroll-area');
+                            if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+                        }
                     }
+                    
+                    // Fallback to absolute scroll just in case
+                    setTimeout(() => {
+                        const scrollArea = document.getElementById('scroll-area');
+                        if (scrollArea && scrollArea.scrollTop < 100) {
+                            scrollArea.scrollTop = scrollArea.scrollHeight + 1000;
+                        }
+                    }, 500);
                 }, 300);
             }, 300);
         }
