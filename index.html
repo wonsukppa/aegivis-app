@@ -681,8 +681,8 @@
         </div>
 
         <!-- STICKY ACTION BUTTON (Dynamic) -->
-        <div id="action-bar" class="absolute bottom-0 left-0 right-0 p-6 pb-10 glass border-t border-white/5 z-50 rounded-t-[2.5rem] hidden">
-            <button id="main-action-btn" class="w-full btn-premium py-5 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3">
+        <div id="action-bar" class="fixed bottom-0 left-0 right-0 p-6 pb-[calc(20px+env(safe-area-inset-bottom,16px))] glass-dark border-t border-white/10 z-[60] rounded-t-[2.5rem] hidden shadow-2xl">
+            <button id="main-action-btn" class="w-full btn-premium py-5 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-lg shadow-blue-500/30">
                 <i class="fas fa-paper-plane text-xs"></i> <span>출동 수락 및 현장 이동</span>
             </button>
             <p id="action-hint" class="text-center text-[9px] text-slate-500 mt-3">출동 승인 시 상황실에 이동 경로가 실시간 보고됩니다.</p>
