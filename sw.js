@@ -1,7 +1,8 @@
-const CACHE_NAME = 'aegivis-v7-cache'; // 버전을 v7로 올려서 캐시 강제 갱신
+const CACHE_NAME = 'aegivis-v8-cache'; // 버전을 v8로 올려서 최종 통합 디자인 강제 갱신
 const urlsToCache = [
   './index.html',
   './Aegivis_3_0_App_Final.html',
+  './Aegivis_3_0_App_Final_v305.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
