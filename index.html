@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>이지비스 3.0 | 통합 관제 프로토타입</title>
+    <title>이지비스 3.0 | 모바일 출동 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script>
+        // Aegivis Demo Server Base URL
+        const BASE_URL = 'http://192.168.1.2:5100';
+    </script>
     <link rel="manifest" href="manifest.json?v=3">
     <link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
     <meta name="theme-color" content="#0f172a">
@@ -213,11 +217,11 @@
                         </div>
 
                         <!-- Critical Card 2 (NEW) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-red-500 relative" onclick="openDetail('강남역 지하도', '14', 'Gangnam-gu')">
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-red-500 relative" onclick="openDetail('강남구 태헤란로 지하차도', '14', 'Gangnam-gu', 'gangnam')">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 class="text-white font-bold text-base">강남역 지하도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: GN-2022 / 지하 2층</p>
+                                    <h3 class="text-white font-bold text-base">강남구 태헤란로 지하차도</h3>
+                                    <p class="text-[10px] text-slate-500">ID: GN-UD-01 / 지하 1층</p>
                                 </div>
                                 <span class="text-[10px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded tracking-tighter">즉시 대응</span>
                             </div>
@@ -245,12 +249,11 @@
                         <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-2"></span> 주의 관찰 (WATCH)
                     </h2>
                     <div class="space-y-3">
-                        <!-- Critical Card 2 (Moved to Watch) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('노량진 1 지하차도', '10', 'Dongjak-gu')">
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('은평구 지하차도 A', '10', 'Eunpyeong-gu', 'eunpyeong')">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 class="text-white font-bold text-base">노량진 1 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: DJ-3011 / 지하 2층</p>
+                                    <h3 class="text-white font-bold text-base">은평구 지하차도 A</h3>
+                                    <p class="text-[10px] text-slate-500">ID: IS-UD-03 / 지하 1층</p>
                                 </div>
                                 <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
                             </div>
@@ -796,6 +799,7 @@
 
         let currentSiteName = "";
         let currentAgentId = "";
+        let currentSiteId = "";
         let dispatchAccepted = false;
     </script>
     <style>
@@ -887,9 +891,10 @@
             backBtn.classList.remove('hidden');
         }
 
-        function openDetail(siteName, levelCm, location) {
+        function openDetail(siteName, levelCm, location, siteId) {
             hideAllViews();
             currentSiteName = siteName;
+            currentSiteId = siteId || 'gangnam';
             const level = parseInt(levelCm);
             detailView.classList.remove('hidden');
             detailView.classList.add('view-transition');
@@ -1023,6 +1028,19 @@
             if (hqLog) {
                 hqLog.innerHTML = `<p class="text-yellow-400 font-bold">&#9679; [${now}] ${agentId} — ${siteName} 출동 수락 (현장 이동 중)</p>`;
             }
+
+            // ── SERVER SYNC ──────────────────────────────────────────
+            fetch(`${BASE_URL}/api/dispatch/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    site_id: currentSiteId,
+                    name: agentId,
+                    status: '출동 수락 (현장 이동 중)',
+                    phone: '010-8282-1024'
+                })
+            }).catch(err => console.error("Sync failed:", err));
+            // ────────────────────────────────────────────────────────
 
             // 3. Simulate HQ Acknowledgement after 1.5s
             setTimeout(() => {
@@ -1176,6 +1194,19 @@
             document.getElementById('success-site').innerText = currentSiteName;
             document.getElementById('success-time').innerText = now;
             document.getElementById('success-agent').innerText = currentAgentId;
+
+            // ── SERVER SYNC ──────────────────────────────────────────
+            fetch(`${BASE_URL}/api/dispatch/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    site_id: currentSiteId,
+                    name: currentAgentId,
+                    status: '현장 도착 (인증 완료)',
+                    phone: '010-8282-1024'
+                })
+            }).catch(err => console.error("Sync failed:", err));
+            // ────────────────────────────────────────────────────────
 
             successOverlay.classList.remove('hidden');
             setTimeout(() => {
