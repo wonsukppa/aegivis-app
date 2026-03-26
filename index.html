@@ -123,10 +123,15 @@
             <div class="flex justify-between items-center mb-0.5">
                 <div class="flex items-center gap-3">
                     <i id="back-btn" class="fas fa-chevron-left text-white hidden cursor-pointer" onclick="showDashboard()"></i>
-                    <h1 id="header-main-title" class="text-base font-black text-white tracking-tight uppercase">이지비스 3.0</h1>
+                    <h1 id="header-main-title" class="text-base font-black text-white tracking-tight uppercase">이지비스 3.0 <span class="text-[8px] font-bold text-slate-500 ml-1 px-1.5 py-0.5 bg-white/5 rounded border border-white/10 uppercase align-middle">v3.0.5</span></h1>
                 </div>
-                <div id="connection-status" class="status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black">
-                    정상 (NORMAL)
+                <div class="flex items-center gap-2">
+                    <button onclick="testServerConnection()" class="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-500 hover:text-blue-400">
+                        <i class="fas fa-plug text-[9px]"></i>
+                    </button>
+                    <div id="connection-status" class="status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black">
+                        정상 (NORMAL)
+                    </div>
                 </div>
             </div>
             <p id="header-subtitle" class="text-[9px] text-slate-500 font-bold tracking-wide uppercase">서울 통합 관제 센터</p>

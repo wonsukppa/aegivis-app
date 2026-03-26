@@ -2,47 +2,80 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aegivis 3.0 | 서울시설공단 제출형 프로토타입</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>이지비스 3.0 | 모바일 출동 시스템</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script>
+        // Aegivis Demo Server Base URL
+        const BASE_URL = 'http://192.168.1.2:5100';
+    </script>
+    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
+    <meta name="theme-color" content="#0f172a">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap');
-        
         body {
             font-family: 'Pretendard', sans-serif;
-            background-color: #05070a;
+            background-color: #020408;
             color: #e2e8f0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             overflow: hidden;
         }
 
         .glass {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .phone-frame {
+            width: 100%;
+            max-width: 410px;
+            height: 840px;
+            background: #0f172a;
+            border-radius: 3.5rem;
+            border: 10px solid #1e293b;
+            position: relative;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .status-badge {
             font-family: 'Orbitron', sans-serif;
-            text-shadow: 0 0 10px currentColor;
+            text-shadow: 0 0 8px currentColor;
         }
-
-        .glow-green { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
-        .glow-red { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
 
         .site-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
         .site-card:active {
-            transform: scale(0.98);
-            background: rgba(37, 99, 235, 0.2);
-            border-color: rgba(37, 99, 235, 0.5);
+            transform: scale(0.97);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-premium {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.5);
+            transition: all 0.3s;
+        }
+
+        .btn-premium:active {
+            transform: translateY(2px);
+            box-shadow: 0 4px 8px -2px rgba(37, 99, 235, 0.4);
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
+
         @keyframes scan {
             0% { top: 0%; opacity: 0; }
             5% { opacity: 1; }
@@ -53,398 +86,1364 @@
         .scan-line {
             position: absolute;
             width: 100%;
-            height: 2px;
-            background: #22c55e;
-            box-shadow: 0 0 15px #22c55e;
+            height: 3px;
+            background: #10b981;
+            box-shadow: 0 0 20px #10b981;
             z-index: 50;
-            animation: scan 2s infinite ease-in-out;
+            animation: scan 2.5s infinite ease-in-out;
+        }
+
+        .chart-bar {
+            transition: height 1s ease-out;
+        }
+
+        .view-transition {
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .nav-active {
+            color: #3b82f6 !important;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <!-- iOS Style Notch -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-[#1e293b] rounded-b-2xl z-50"></div>
+
+        <!-- App Header (Ultra Compact) -->
+        <div class="px-6 pt-7 pb-2 glass z-40 border-b border-white/5">
+            <div class="flex justify-between items-center mb-0.5">
+                <div class="flex items-center gap-3">
+                    <i id="back-btn" class="fas fa-chevron-left text-white hidden cursor-pointer" onclick="showDashboard()"></i>
+                    <h1 id="header-main-title" class="text-base font-black text-white tracking-tight uppercase">이지비스 3.0 <span class="text-[8px] font-bold text-slate-500 ml-1 px-1.5 py-0.5 bg-white/5 rounded border border-white/10 uppercase align-middle">v3.0.5</span></h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="testServerConnection()" class="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-500 hover:text-blue-400">
+                        <i class="fas fa-plug text-[9px]"></i>
+                    </button>
+                    <div id="connection-status" class="status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black">
+                        정상 (NORMAL)
+                    </div>
+                </div>
+            </div>
+            <p id="header-subtitle" class="text-[9px] text-slate-500 font-bold tracking-wide uppercase">서울 통합 관제 센터</p>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="scroll-area" class="flex-1 overflow-y-auto no-scrollbar pb-24">
+            
+            <!-- DASHBOARD HOME -->
+            <div id="dashboard-view" class="p-6 space-y-6">
+                <!-- Statistics Summary (clickable) -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="glass p-3 rounded-2xl text-center cursor-pointer active:scale-95 transition-transform" onclick="filterSites('all')">
+                        <p class="text-[8px] text-slate-500 font-bold mb-1">전체 현장</p>
+                        <p class="text-lg font-black text-white">138</p>
+                    </div>
+                    <div class="glass p-3 rounded-2xl text-center border border-red-500/30 cursor-pointer active:scale-95 transition-transform" onclick="filterSites('urgent')">
+                        <p class="text-[8px] text-red-500 font-bold mb-1">긴급 출동</p>
+                        <p class="text-lg font-black text-red-500">02</p>
+                    </div>
+                    <div class="glass p-3 rounded-2xl text-center border border-yellow-500/30 cursor-pointer active:scale-95 transition-transform" onclick="filterSites('watch')">
+                        <p class="text-[8px] text-yellow-500 font-bold mb-1">주의 관찰</p>
+                        <p class="text-lg font-black text-yellow-500">04</p>
+                    </div>
+                </div>
+
+                <!-- Site List Filter - All 25 Seoul districts -->
+                <div id="district-filter" class="flex gap-2 overflow-x-auto no-scrollbar py-2">
+                    <button onclick="filterDistrict(this, 'all')" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap">전체</button>
+                    <button onclick="filterDistrict(this, '종로')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">종로구 (6)</button>
+                    <button onclick="filterDistrict(this, '중')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">중구 (12)</button>
+                    <button onclick="filterDistrict(this, '용산')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">용산구 (5)</button>
+                    <button onclick="filterDistrict(this, '성동')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">성동구 (7)</button>
+                    <button onclick="filterDistrict(this, '광진')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">광진구 (4)</button>
+                    <button onclick="filterDistrict(this, '동대문')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">동대문구 (9)</button>
+                    <button onclick="filterDistrict(this, '중랑')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">중랑구 (3)</button>
+                    <button onclick="filterDistrict(this, '성북')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">성북구 (8)</button>
+                    <button onclick="filterDistrict(this, '강북')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">강북구 (5)</button>
+                    <button onclick="filterDistrict(this, '도봉')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">도봉구 (4)</button>
+                    <button onclick="filterDistrict(this, '노원')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">노원구 (11)</button>
+                    <button onclick="filterDistrict(this, '은평')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">은평구 (7)</button>
+                    <button onclick="filterDistrict(this, '서대문')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">서대문구 (3)</button>
+                    <button onclick="filterDistrict(this, '마포')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">마포구 (6)</button>
+                    <button onclick="filterDistrict(this, '양천')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">양천구 (5)</button>
+                    <button onclick="filterDistrict(this, '강서')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">강서구 (14)</button>
+                    <button onclick="filterDistrict(this, '구로')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">구로구 (6)</button>
+                    <button onclick="filterDistrict(this, '금천')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">금천구 (2)</button>
+                    <button onclick="filterDistrict(this, '영등포')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">영등포구 (9)</button>
+                    <button onclick="filterDistrict(this, '동작')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">동작구 (8)</button>
+                    <button onclick="filterDistrict(this, '관악')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">관악구 (7)</button>
+                    <button onclick="filterDistrict(this, '서초')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">서초구 (3)</button>
+                    <button onclick="filterDistrict(this, '강남')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">강남구 (24)</button>
+                    <button onclick="filterDistrict(this, '송파')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">송파구 (6)</button>
+                    <button onclick="filterDistrict(this, '강동')" class="bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">강동구 (3)</button>
+                </div>
+
+                <!-- Urgent Tasks -->
+                <div id="urgent-section">
+                    <h2 class="text-[10px] text-red-500 font-black uppercase tracking-widest mb-3 flex items-center">
+                        <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-2 animate-pulse"></span> 긴급 대응 요망 (CRITICAL)
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <!-- Critical Card 1 -->
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-red-500 relative" onclick="openDetail('세종로 지하차도', '12', 'Seoul Central')">
+                            <!-- ... existing content ... -->
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-white font-bold text-base">세종로 지하차도</h3>
+                                    <p class="text-[10px] text-slate-500">ID: CN-1024 / 지하 1층</p>
+                                </div>
+                                <span class="text-[10px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded tracking-tighter">즉시 대응</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
+                                    <p class="text-lg font-black text-red-500">12<span class="text-[10px] ml-0.5">cm</span></p>
+                                </div>
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">전조증상</p>
+                                    <p class="text-lg font-black text-white">역류<span class="text-[8px] ml-0.5 font-normal">감지</span></p>
+                                </div>
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-1">골든타임</p>
+                                    <p class="text-lg font-black text-white">12<span class="text-[10px] ml-0.5">min</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Critical Card 2 (NEW) -->
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-red-500 relative" onclick="openDetail('강남구 태헤란로 지하차도', '14', 'Gangnam-gu', 'gangnam')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-white font-bold text-base">강남구 태헤란로 지하차도</h3>
+                                    <p class="text-[10px] text-slate-500">ID: GN-UD-01 / 지하 1층</p>
+                                </div>
+                                <span class="text-[10px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded tracking-tighter">즉시 대응</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
+                                    <p class="text-lg font-black text-red-500">14<span class="text-[10px] ml-0.5">cm</span></p>
+                                </div>
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">전조증상</p>
+                                    <p class="text-lg font-black text-white">침수<span class="text-[8px] ml-0.5 font-normal">위험</span></p>
+                                </div>
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-1">골든타임</p>
+                                    <p class="text-lg font-black text-white">08<span class="text-[10px] ml-0.5">min</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Watch Tasks -->
+                <div id="watch-section" class="mt-6">
+                    <h2 class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-3 flex items-center">
+                        <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-2"></span> 주의 관찰 (WATCH)
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('은평구 지하차도 A', '10', 'Eunpyeong-gu', 'eunpyeong')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-white font-bold text-base">은평구 지하차도 A</h3>
+                                    <p class="text-[10px] text-slate-500">ID: IS-UD-03 / 지하 1층</p>
+                                </div>
+                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
+                                    <p class="text-lg font-black text-yellow-500">10<span class="text-[10px] ml-0.5">cm</span></p>
+                                </div>
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
+                                    <p class="text-lg font-black text-white">45<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
+                                </div>
+                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
+                                    <p class="text-lg font-black text-white">68<span class="text-[10px] ml-0.5">%</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Watch Card 2 (NEW) -->
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('신림 지하차도', '08', 'Gwanak-gu')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-white font-bold text-base">신림 지하차도</h3>
+                                    <p class="text-[10px] text-slate-500">ID: GK-5012 / 지하 1층</p>
+                                </div>
+                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
+                            </div>
+                            <div class="flex justify-between text-center">
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
+                                    <p class="text-lg font-black text-yellow-500">08<span class="text-[10px] ml-0.5">cm</span></p>
+                                </div>
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3 mx-1">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
+                                    <p class="text-lg font-black text-white">32<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
+                                </div>
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
+                                    <p class="text-lg font-black text-white">42<span class="text-[10px] ml-0.5">%</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Watch Card 3 (NEW) -->
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('성산 지하차도', '07', 'Mapo-gu')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-white font-bold text-base">성산 지하차도</h3>
+                                    <p class="text-[10px] text-slate-500">ID: MP-4082 / 지하 1층</p>
+                                </div>
+                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
+                            </div>
+                            <div class="flex justify-between text-center">
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
+                                    <p class="text-lg font-black text-yellow-500">07<span class="text-[10px] ml-0.5">cm</span></p>
+                                </div>
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3 mx-1">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
+                                    <p class="text-lg font-black text-white">28<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
+                                </div>
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
+                                    <p class="text-lg font-black text-white">35<span class="text-[10px] ml-0.5">%</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Watch Card 4 (NEW) -->
+                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('대림 지하차도', '09', 'Yeongdeungpo')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 class="text-white font-bold text-base">대림 지하차도</h3>
+                                    <p class="text-[10px] text-slate-500">ID: YP-6021 / 지하 2층</p>
+                                </div>
+                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
+                            </div>
+                            <div class="flex justify-between text-center">
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
+                                    <p class="text-lg font-black text-yellow-500">09<span class="text-[10px] ml-0.5">cm</span></p>
+                                </div>
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3 mx-1">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
+                                    <p class="text-lg font-black text-white">38<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
+                                </div>
+                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
+                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
+                                    <p class="text-lg font-black text-white">55<span class="text-[10px] ml-0.5">%</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HQ Status Board -->
+                <div class="glass rounded-2xl overflow-hidden border border-white/10">
+                    <div class="bg-blue-900/40 px-4 py-2 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
+                        <span class="text-[9px] font-black text-blue-300 uppercase tracking-widest">상황실 실시간 업데이트</span>
+                    </div>
+                    <div id="hq-log" class="px-4 py-2 space-y-1 text-[10px]">
+                        <p class="text-slate-500">● 대기 중 — 출동 요원 없음</p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="glass p-4 rounded-2xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-history text-slate-500"></i>
+                        <p id="dashboard-log-text" class="text-[10px] text-slate-400">데이터 서버 마지막 수신: 방금 전</p>
+                    </div>
+                    <i class="fas fa-sync-alt text-slate-600 text-[10px] animate-spin-slow"></i>
+                </div>
+            </div>
+
+
+            <!-- DETAIL VIEW (Initially Hidden) -->
+            <div id="detail-view" class="hidden px-5 pt-2 space-y-3 pb-36">
+
+                <!-- LIVE CCTV at TOP of detail (Min Margin) -->
+                <div class="relative glass rounded-2xl overflow-hidden border border-white/10" style="aspect-ratio:16/9">
+                    <img src="https://images.unsplash.com/photo-1545147986-a9d6f210df99?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" style="object-position: center">
+                    <div class="absolute top-3 left-3 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        <span class="text-[9px] font-black bg-black/60 px-2 py-0.5 rounded uppercase tracking-wide">실시간 현장 카메라 · CH 01</span>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-2/3 h-1/2 border-2 border-yellow-400/50 rounded-lg relative">
+                            <span class="absolute -top-5 left-0 text-[8px] bg-yellow-500 text-black px-2 py-1 font-black rounded">AI: 수위 상승 감지 중</span>
+                            <div class="absolute inset-0 bg-yellow-400/5 animate-pulse"></div>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-2 right-2 text-[7px] text-white/60 font-bold bg-black/30 px-1 rounded">4K/30FPS</div>
+                </div>
+
+                <!-- Site Info Wrapper (Integrated & Mockup Matched) -->
+                <div id="detail-header-card" class="glass p-4 rounded-3xl border-l-[6px] border-green-500">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h2 id="detail-site-name" class="text-white font-black text-base">세종로 지하차도</h2>
+                            <p id="detail-site-id" class="text-[9px] text-slate-500 mt-0.5">ID: CN-1024 / 지하 1층</p>
+                        </div>
+                        <span id="detail-status" class="text-[9px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded-full uppercase tracking-tighter">정상</span>
+                    </div>
+
+                    <!-- Sensor Readings (2-Column Grid matching mockup) -->
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-white/5 rounded-2xl p-4 border border-white/5">
+                            <p class="text-[9px] text-slate-400 mb-2">현재 강수량</p>
+                            <div class="flex items-baseline gap-1">
+                                <p id="detail-rainfall" class="text-2xl font-black text-blue-400">12.5</p>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">mm/h</span>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 rounded-2xl p-4 border border-white/5">
+                            <p class="text-[9px] text-slate-400 mb-2">예측 수위 (레이더)</p>
+                            <div class="flex items-baseline gap-1">
+                                <p id="detail-level" class="text-2xl font-black text-green-400">0.05</p>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">m</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Decision Insight (styled like mockup) -->
+                    <div id="detail-ai-box" class="rounded-2xl border-2 border-green-500/40 p-4 bg-green-500/5">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-[10px] font-black text-green-400 uppercase tracking-tight">AI 의사결정 지원</h4>
+                            <span class="text-[8px] text-slate-500 font-bold">업데이트: 방금 전</span>
+                        </div>
+                        <p id="detail-ai-text" class="text-xs text-slate-300 leading-normal font-bold">
+                            현 시점 상황 정상을 유지합니다. AI 보정 결과 수위 상승 전조가 발견되지 않았습니다.
+                        </p>
+                    </div>
+
+                    <!-- Status Tags (Board, Comm, GPS) -->
+                    <div class="flex justify-between items-center mt-5 px-1 pb-1">
+                        <div class="flex items-center gap-1.5 opacity-60">
+                            <i class="fas fa-microchip text-[10px] text-white/40"></i>
+                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">보드: 안정</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-link text-[10px] text-green-400"></i>
+                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">통신: 정상</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 opacity-60">
+                            <i class="fas fa-location-arrow text-[10px] text-white/40"></i>
+                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">GPS: 정상</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integrated Multi-Sensor Monitoring (Relocated to Detail) -->
+                <div id="sensor-mini-view" class="px-1 mt-4">
+                    <div class="flex justify-between items-center mb-3 px-1">
+                        <h3 class="text-[9px] text-slate-500 font-black uppercase tracking-widest">통합 센서 교차 검증 데이터</h3>
+                        <div class="flex gap-2">
+                            <span class="text-[8px] text-green-400 font-bold">● 라이브</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="glass p-3 rounded-2xl border border-white/5">
+                            <p class="text-[8px] text-slate-500 mb-1">레이더 / AI 카메라</p>
+                            <div class="flex justify-between items-end">
+                                <p class="text-xs font-black text-white"><span id="detail-sensor-radar">0.05</span><span class="text-[8px] text-slate-500 ml-0.5">m</span></p>
+                                <p id="detail-sensor-match" class="text-[8px] text-green-500 font-bold">일치</p>
+                            </div>
+                        </div>
+                        <div class="glass p-3 rounded-2xl border border-white/5">
+                            <p class="text-[8px] text-slate-500 mb-1">PLC 접점수위계</p>
+                            <div class="flex justify-between items-end">
+                                <p id="detail-sensor-plc" class="text-xs font-black text-white">OFF</p>
+                                <p id="detail-sensor-plc-status" class="text-[8px] text-slate-500 font-bold">정상</p>
+                            </div>
+                        </div>
+                        <div class="glass p-3 rounded-2xl border border-white/5">
+                            <p class="text-[8px] text-slate-500 mb-1">기상청 강수량</p>
+                            <div class="flex justify-between items-end">
+                                <p class="text-xs font-black text-white"><span id="detail-sensor-kma">12.5</span><span class="text-[8px] text-slate-500 ml-0.5">mm</span></p>
+                                <i class="fas fa-cloud-showers-heavy text-slate-500 text-[10px]"></i>
+                            </div>
+                        </div>
+                        <div class="glass p-3 rounded-2xl border border-white/5">
+                            <p class="text-[8px] text-slate-500 mb-1">로컬 기상센서</p>
+                            <div class="flex justify-between items-end">
+                                <p class="text-xs font-black text-white"><span id="detail-sensor-local">12.2</span><span class="text-[8px] text-slate-500 ml-0.5">mm</span></p>
+                                <p class="text-[8px] text-blue-400 font-bold">보정됨</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Fail-safe Note -->
+                <div class="flex items-start gap-3 glass p-3 rounded-2xl">
+                    <i class="fas fa-shield-alt text-blue-400 mt-0.5 text-xs"></i>
+                    <p class="text-[9px] text-slate-400 leading-relaxed">도로면 레이더(80GHz) + AI카메라 연속 모니터링 중. <b class="text-blue-300">15cm 도달 전 선제 출동</b>이 핵심입니다. 출동 수락 시 GPS가 상황실에 실시간 공유됩니다.</p>
+                </div>
+
+                <!-- Evidence & Reporting Section (Initially Hidden, shown after arrival) -->
+                <div id="evidence-section" class="px-1 mt-6 hidden">
+                    <div class="flex justify-between items-center mb-4 px-1">
+                        <h3 class="text-[9px] text-slate-500 font-black uppercase tracking-widest">증거 수집 및 조치 보고 (EVIDENCE)</h3>
+                        <span class="text-[8px] text-blue-400 font-bold">● 단계별 기록 중</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <!-- Photo 1: Before -->
+                        <div id="photo-before-slot" class="glass rounded-2xl aspect-square flex flex-col items-center justify-center border-2 border-dashed border-white/10 relative overflow-hidden group active:scale-95 transition-transform" onclick="triggerCamera('before')">
+                            <i class="fas fa-camera text-slate-600 text-xl mb-2 group-hover:text-blue-400"></i>
+                            <p class="text-[8px] text-slate-500 font-bold uppercase text-center px-1 leading-tight">조작 전 전경<br>(진입차단 전)</p>
+                            <img id="img-before" class="absolute inset-0 w-full h-full object-cover hidden">
+                            <div id="check-before" class="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center hidden">
+                                <i class="fas fa-check text-[8px] text-white"></i>
+                            </div>
+                        </div>
+
+                        <!-- Photo 2: After -->
+                        <div id="photo-after-slot" class="glass rounded-2xl aspect-square flex flex-col items-center justify-center border-2 border-dashed border-white/10 relative overflow-hidden group opacity-40 pointer-events-none active:scale-95 transition-transform" onclick="triggerCamera('after')">
+                            <i class="fas fa-camera text-slate-600 text-xl mb-2 group-hover:text-blue-400"></i>
+                            <p class="text-[8px] text-slate-500 font-bold uppercase text-center px-1 leading-tight">조작 후 전경<br>(진입차단 완료)</p>
+                            <img id="img-after" class="absolute inset-0 w-full h-full object-cover hidden">
+                            <div id="check-after" class="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center hidden">
+                                <i class="fas fa-check text-[8px] text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-log Status -->
+                    <div class="glass p-4 rounded-2xl space-y-2 border border-white/5">
+                        <div class="flex justify-between items-center">
+                            <p class="text-[9px] text-slate-400">법적 증거 저장 서버</p>
+                            <span class="text-[8px] text-emerald-400 font-bold tracking-tighter uppercase">연결됨 (SECURE)</span>
+                        </div>
+                        <div id="report-log" class="text-[8px] text-slate-500 font-mono space-y-1">
+                            <p>> GPS 위변조 방지 레이어 활성화...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- END detail-view -->
+
+            <!-- MONITORING VIEW (NEW) -->
+            <div id="monitoring-view" class="hidden p-6 space-y-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xs font-black text-slate-500 uppercase tracking-widest">실시간 현장 통합 모니터링</h2>
+                    <span class="text-[9px] text-green-400 font-bold animate-pulse">● 138 SITES LIVE</span>
+                </div>
+                
+                <!-- Live Mini Feeds -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="relative glass rounded-2xl overflow-hidden aspect-video border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1545147986-a9d6f210df99?q=80&w=400" class="w-full h-full object-cover opacity-60">
+                        <div class="absolute bottom-1 left-2 text-[7px] font-bold text-white bg-black/40 px-1 rounded">CH-01 세종로</div>
+                    </div>
+                    <div class="relative glass rounded-2xl overflow-hidden aspect-video border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1510156905531-15b6d5952d9b?q=80&w=400" class="w-full h-full object-cover opacity-60">
+                        <div class="absolute bottom-1 left-2 text-[7px] font-bold text-white bg-black/40 px-1 rounded">CH-02 강남역</div>
+                    </div>
+                </div>
+
+                <!-- Alert History List -->
+                <div class="space-y-3 mt-4">
+                    <h3 class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">최근 주요 이벤트 이력</h3>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-red-500">
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="text-[10px] text-white font-bold">세종로 지하차도 — 침수 위험</p>
+                            <p class="text-[8px] text-slate-500">13:42</p>
+                        </div>
+                        <p class="text-[9px] text-slate-400">AI 분석 결과 수위 급상승 패턴 감지 (15cm 임계치 도달 예상)</p>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-yellow-500">
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="text-[10px] text-white font-bold">노량진 1 지하차도 — 주의보</p>
+                            <p class="text-[8px] text-slate-500">12:15</p>
+                        </div>
+                        <p class="text-[9px] text-slate-400">강우량 증가로 인한 노면 수위 10cm 도달 (지속 관찰 필요)</p>
+                    </div>
+                    <div class="glass p-4 rounded-2xl border-l-4 border-blue-500 opacity-60">
+                        <p class="text-[10px] text-white font-bold mb-1">관측 시스템 정기 진단 완료</p>
+                        <p class="text-[9px] text-slate-400">전 구역 센서 데이터 수신 상태 양호 (138/138)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS VIEW (NEW) -->
+            <div id="notifications-view" class="hidden p-6 space-y-4">
+                <h2 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">긴급 알림 센터</h2>
+                
+                <div class="space-y-3">
+                    <div class="glass p-4 rounded-3xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-red-500/10 rounded-bl-full flex items-center justify-end pr-3 pt-3">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-sm"></i>
+                        </div>
+                        <p class="text-[9px] text-red-400 font-black mb-1">긴급 알림</p>
+                        <h3 class="text-white font-bold text-sm mb-2">[긴급] 세종로 현장 즉시 출동</h3>
+                        <p class="text-[10px] text-slate-400 leading-relaxed mb-3">세종로 지하차도 수위가 15cm를 돌파했습니다. 인근 요원은 즉시 현장으로 이동하여 진입 차단 조치를 취하십시오.</p>
+                        <button onclick="openDetail('세종로 지하차도', '15', 'Seoul Central')" class="text-[10px] font-black text-blue-400 bg-blue-400/10 px-4 py-2 rounded-xl">현장 데이터 확인</button>
+                    </div>
+
+                    <div class="glass p-4 rounded-2xl opacity-80">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[8px] font-black bg-slate-700 px-2 py-0.5 rounded text-slate-400 uppercase">System</span>
+                            <span class="text-[8px] text-slate-600">3시간 전</span>
+                        </div>
+                        <h4 class="text-xs text-white font-bold mb-1">Aegivis 3.0 업데이트 완료</h4>
+                        <p class="text-[10px] text-slate-500">AI 비전 엔진 v2.4 패치가 적용되었습니다. 수위 측정 정확도가 1.2% 향상되었습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS VIEW (NEW) -->
+            <div id="settings-view" class="hidden p-6 space-y-6">
+                <div class="flex flex-col items-center py-6">
+                    <div class="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center p-1 mb-4 shadow-xl shadow-blue-500/20">
+                        <div class="w-full h-full bg-[#0f172a] rounded-full flex items-center justify-center overflow-hidden">
+                            <i class="fas fa-user-shield text-3xl text-blue-500"></i>
+                        </div>
+                    </div>
+                    <h2 class="text-lg font-black text-white">현장 요원 양동혁</h2>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">ID: YDH-1024 / 관제본부 직할</p>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-[10px] text-slate-500 font-black uppercase tracking-widest pl-2">계정 및 보안</h3>
+                    <div class="glass rounded-2xl overflow-hidden divide-y divide-white/5">
+                        <div class="p-4 flex justify-between items-center active:bg-white/5 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-fingerprint text-blue-400"></i>
+                                <span class="text-xs text-slate-300 font-bold">생체 인증 관리</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-[10px] text-slate-600"></i>
+                        </div>
+                        <div class="p-4 flex justify-between items-center active:bg-white/5 cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-key text-slate-500"></i>
+                                <span class="text-xs text-slate-300 font-bold">비상 조작 비밀번호 변경</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-[10px] text-slate-600"></i>
+                        </div>
+                    </div>
+
+                    <h3 class="text-[10px] text-slate-500 font-black uppercase tracking-widest pl-2 mt-6">앱 정보</h3>
+                    <div class="glass rounded-2xl overflow-hidden divide-y divide-white/5">
+                        <div class="p-4 flex justify-between items-center text-xs">
+                            <span class="text-slate-400 font-bold">시스템 버전</span>
+                            <span class="text-white font-mono">v3.1.2-cache-nuclear</span>
+                        </div>
+                        <div class="p-4 flex justify-between items-center text-xs">
+                            <span class="text-slate-400 font-bold">최근 동기화</span>
+                            <span class="text-emerald-400 font-bold">방금 전 (SUCCESS)</span>
+                        </div>
+                        <div class="p-4 flex justify-between items-center text-xs active:bg-blue-500/20 cursor-pointer" onclick="forcePurgeCache()">
+                            <span class="text-blue-400 font-bold">시스템 캐시 강제 초기화</span>
+                            <i class="fas fa-sync-alt text-blue-500 animate-spin-slow"></i>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-500/20 active:bg-red-500/20 transition-colors mt-8">
+                        로그아웃 및 서비스 종료
+                    </button>
+                </div>
+            </div>
+            <div id="scanner-view" class="hidden flex flex-col items-center justify-center h-full p-8 text-center pt-24">
+                <div class="glass p-8 rounded-[3rem] w-full max-w-[320px] aspect-square relative flex items-center justify-center mb-8 border-2 border-green-500/30 overflow-hidden">
+                    <div class="scan-line"></div>
+                    
+                    <!-- Corner Brackets -->
+                    <div class="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-green-500 rounded-tl-xl"></div>
+                    <div class="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-green-500 rounded-tr-xl"></div>
+                    <div class="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-green-500 rounded-bl-xl"></div>
+                    <div class="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-green-500 rounded-br-xl"></div>
+                    
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=AEGIVIS-AUTH-777&color=ffffff&bgcolor=00000000" class="w-32 h-32 opacity-80" alt="QR">
+                </div>
+                
+                <h2 class="text-lg font-black text-white mb-2">현장 장비 인증</h2>
+                <p class="text-[10px] text-slate-400 leading-relaxed">
+                    제어함 내부의 QR 코드를 인식하면<br>
+                    <b class="text-green-500">현장 도착(Site Arrival)</b>이 서버에 기록되며<br>
+                    물리적 제어 인터페이스가 활성화됩니다.
+                </p>
+
+                <button onclick="simulateArrival()" class="mt-12 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm py-4 px-10 rounded-full font-black transition-all shadow-lg shadow-green-600/40">
+                    <i class="fas fa-qrcode mr-2"></i> 현장 도착 확인 (QR 스캔 시뮬)
+                </button>
+            </div>
+
+        </div>
+
+        <!-- STICKY ACTION BUTTON (Dynamic) -->
+        <div id="action-bar" class="fixed bottom-0 left-0 right-0 p-6 pb-[calc(20px+env(safe-area-inset-bottom,16px))] glass-dark border-t border-white/10 z-[60] rounded-t-[2.5rem] hidden shadow-2xl">
+            <button id="main-action-btn" class="w-full btn-premium py-5 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-transform shadow-lg shadow-blue-500/30">
+                <i class="fas fa-paper-plane text-xs"></i> <span>출동 수락 및 현장 이동</span>
+            </button>
+            <p id="action-hint" class="text-center text-[9px] text-slate-500 mt-3">출동 승인 시 상황실에 이동 경로가 실시간 보고됩니다.</p>
+        </div>
+
+        <!-- NAVIGATION BAR (Fixed) -->
+        <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 glass-dark border-t border-white/10 px-6 flex justify-between items-center z-50">
+            <i id="nav-dashboard" class="fas fa-th-large text-blue-500 transition-colors cursor-pointer" onclick="showDashboard()"></i>
+            <i id="nav-monitoring" class="fas fa-stream text-slate-600 transition-colors cursor-pointer" onclick="showMonitoring()"></i>
+            <!-- Floating QR Scan Trigger (locked until dispatch accepted) -->
+            <div id="qr-btn" onclick="handleQRClick()" class="absolute -top-6 w-14 h-14 bg-slate-700 rounded-full flex items-center justify-center shadow-lg border-4 border-[#0f172a] transform transition-all cursor-pointer" title="출동 수락 후 활성화됩니다">
+                <i class="fas fa-lock text-slate-400 text-lg"></i>
+            </div>
+            <div class="w-14"></div>
+            <i id="nav-notifications" class="fas fa-bell text-slate-600 transition-colors cursor-pointer" onclick="showNotifications()"></i>
+            <i id="nav-settings" class="fas fa-user-circle text-slate-600 transition-colors cursor-pointer" onclick="showSettings()"></i>
+        </nav>
+
+        <!-- SUCCESS OVERLAY (Site Arrival) -->
+        <div id="success-overlay" class="absolute inset-0 z-[100] bg-emerald-600 flex flex-col items-center justify-center text-center p-8 hidden opacity-0 transition-opacity duration-500">
+            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-2xl">
+                <i class="fas fa-check text-emerald-600 text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2 tracking-tight">현장 도착 확인완료</h2>
+            <p id="success-detail" class="text-emerald-100 text-xs leading-relaxed opacity-80">
+                디바이스 토큰이 'Site-Confirmed'로 갱신되었습니다.<br>지금부터 현장 물리 제어반 조작 권한이 부여됩니다.
+            </p>
+            <div class="mt-6 bg-white/20 rounded-2xl px-6 py-3 text-left text-[10px] text-white font-bold space-y-1">
+                <p>📍 현장: <span id="success-site">-</span></p>
+                <p>🕒 인증 시각: <span id="success-time">-</span></p>
+                <p>🆔 요원 ID: <span id="success-agent">-</span></p>
+                <p>✅ 상황실 기록: <span class="text-yellow-300">대시보드 업데이트 완료</span></p>
+            </div>
+            <button onclick="startReportingStep()" class="mt-8 bg-white text-emerald-600 py-3 px-10 rounded-full font-black text-xs uppercase tracking-widest shadow-xl">증거 수집 및 보고 시작</button>
+        </div>
+
+        <!-- CAMERA SIMULATION OVERLAY (Initially Hidden) -->
+        <div id="camera-overlay" class="absolute inset-0 z-[200] bg-black hidden flex-col items-center justify-between py-12 px-8">
+            <div class="w-full flex justify-between items-center">
+                <i class="fas fa-times text-white text-xl cursor-pointer" onclick="closeCamera()"></i>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] text-white font-black tracking-widest">현장 증거 사진 촬영</span>
+                </div>
+                <i class="fas fa-bolt text-yellow-400"></i>
+            </div>
+
+            <!-- Viewfinder -->
+            <div class="w-full aspect-square border-2 border-white/20 rounded-3xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-slate-800 flex items-center justify-center">
+                    <i class="fas fa-video text-white/10 text-6xl"></i>
+                    <!-- Reference Grid -->
+                    <div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                        <div class="border border-white/5"></div><div class="border border-white/5"></div><div class="border border-white/5"></div>
+                        <div class="border border-white/5"></div><div class="border border-white/5"></div><div class="border border-white/5"></div>
+                        <div class="border border-white/5"></div><div class="border border-white/5"></div><div class="border border-white/5"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full flex flex-col items-center gap-6">
+                <p id="camera-hint" class="text-blue-300 text-[10px] font-bold uppercase tracking-widest text-center">차단기 조작 전 전체 현장 촬영</p>
+                <div class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center cursor-pointer active:scale-90 transition-transform" onclick="capturePhoto()">
+                    <div class="w-16 h-16 bg-white rounded-full"></div>
+                </div>
+                <p class="text-slate-500 text-[9px] font-bold">Aegivis Time-stamped / GPS Verified</p>
+            </div>
+        </div>
+
+        <!-- FINAL REPORT OVERLAY (Initially Hidden) -->
+        <div id="report-overlay" class="absolute inset-0 z-[300] bg-[#05070a] flex flex-col items-center justify-center text-center p-8 hidden">
+            <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-blue-500/20">
+                <i class="fas fa-file-signature text-white text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2 tracking-tight">최종 조치 보고서 제출</h2>
+            <p class="text-slate-400 text-xs leading-relaxed opacity-80 mb-8">
+                현장 조치(진입 통제/차단) 완료 및 증거 사진 2매가<br>상황실 서버에 영구적으로 기록되었습니다.
+            </p>
+            <div class="w-full space-y-3 mb-10">
+                <div class="glass p-4 rounded-2xl flex justify-between items-center text-left">
+                    <p class="text-[9px] text-slate-500 uppercase font-black">Report ID</p>
+                    <p class="text-xs font-mono text-white">#AEG-2026-0324</p>
+                </div>
+                <div class="glass p-4 rounded-2xl text-left">
+                    <p class="text-[9px] text-slate-500 uppercase font-black mb-1">조치 상태 요약</p>
+                    <p class="text-xs font-bold text-white">세종로 지하차도 — 조치 완료 (차단막 하강)</p>
+                </div>
+            </div>
+            <button onclick="returnToDashboardAfterReport()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-transform">대시보드로 돌아가기</button>
+        </div>
+
+    </div>
+
+    <!-- UI Logic Script -->
+    <script>
+        const dashboardView = document.getElementById('dashboard-view');
+        const detailView = document.getElementById('detail-view');
+        const scannerView = document.getElementById('scanner-view');
+        const monitoringView = document.getElementById('monitoring-view');
+        const notificationsView = document.getElementById('notifications-view');
+        const settingsView = document.getElementById('settings-view');
+        const actionBar = document.getElementById('action-bar');
+        const backBtn = document.getElementById('back-btn');
+        const headerTitle = document.getElementById('header-main-title');
+        const headerSub = document.getElementById('header-subtitle');
+        const successOverlay = document.getElementById('success-overlay');
+
+        let currentSiteName = "";
+        let currentAgentId = "";
+        let currentSiteId = "";
+        let dispatchAccepted = false;
+    </script>
+    <style>
+        /* Bottom Navigation Safe Area */
+        nav {
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+            height: calc(70px + env(safe-area-inset-bottom, 16px));
+        }
+        
+        /* Adjust content padding to prevent bottom cut */
+        #dashboard-view, #monitoring-view, #notifications-view, #settings-view {
+            padding-bottom: calc(100px + env(safe-area-inset-bottom, 16px));
+        }
+
+        /* Bottom Navigation Safe Area Optimization */
+        #bottom-nav {
+            padding-bottom: env(safe-area-inset-bottom, 16px) !important;
+            height: calc(85px + env(safe-area-inset-bottom, 0px)) !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        #bottom-nav i {
+            margin-bottom: env(safe-area-inset-bottom, 8px); /* Push icons up slightly */
         }
     </style>
     <script>
-        const BASE_URL = 'http://192.168.1.2:5100';
-    </script>
-</head>
-<body class="flex items-center justify-center h-screen p-4">
-
-    <!-- Mobile Frame Mockup (Matches Seoul Facilities Version) -->
-    <div class="relative w-full max-w-[400px] h-[800px] bg-[#0f172a] rounded-[3rem] border-[8px] border-[#1e293b] shadow-2xl overflow-hidden flex flex-col">
-        
-        <!-- Status Bar -->
-        <div class="h-10 flex justify-between items-center px-8 pt-6">
-            <span class="text-sm font-bold">13:06</span>
-            <div class="flex gap-2 text-xs">
-                <i class="fas fa-signal"></i>
-                <i class="fas fa-wifi"></i>
-                <i class="fas fa-battery-full"></i>
-            </div>
-        </div>
-
-        <!-- Header -->
-        <div class="px-6 pt-8">
-            <div class="flex justify-between items-start">
-                <div class="flex items-center gap-3">
-                    <i id="back-btn" class="fas fa-arrow-left text-white text-xl hidden cursor-pointer transition-transform hover:-translate-x-1" onclick="showDashboard()"></i>
-                    <div>
-                        <h1 class="text-2xl font-extrabold text-white">이지비스 3.0 <span class="text-[8px] font-bold text-slate-500 ml-1 px-1.5 py-0.5 bg-white/5 rounded border border-white/10 uppercase align-middle">v3.0.5</span></h1>
-                        <p id="current-site-label" class="text-slate-400 text-xs">서울시 통합 관제 모드</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="testServerConnection()" class="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-500 hover:text-blue-400">
-                        <i class="fas fa-plug text-[10px]"></i>
-                    </button>
-                    <div id="main-status" class="status-badge px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40 text-[10px] font-bold">
-                        연결됨 (ACTIVE)
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- GPS Tracking Bar (Initially Hidden) -->
-        <div id="gps-status-bar" class="hidden bg-green-500/90 text-white text-[9px] py-1 text-center font-bold absolute top-[100px] left-0 w-full z-50">
-            <i class="fas fa-satellite-dish mr-2 animate-pulse"></i> 상황실 실시간 GPS 통보 활성화됨
-        </div>
-
-        <!-- Detail Content (Enhanced with Vision First & 3-Tier Logic) -->
-        <div id="detail-view" class="flex-1 overflow-y-auto px-6 py-4 space-y-4 pb-24 hidden">
+        function hideAllViews() {
+            [dashboardView, detailView, scannerView, monitoringView, notificationsView, settingsView].forEach(v => {
+                if (v) {
+                    v.classList.add('hidden');
+                    v.classList.remove('view-transition');
+                }
+            });
+            actionBar.classList.add('hidden');
+            backBtn.classList.add('hidden');
             
-            <!-- Live Feed (Main Goal: Vision Monitoring) -->
-            <div class="relative rounded-2xl overflow-hidden glass aspect-video">
-                <img id="cctv-img" src="https://images.unsplash.com/photo-1545147986-a9d6f210df99?q=80&w=1000&auto=format&fit=crop" alt="CCTV Feed" class="w-full h-full object-cover opacity-60">
-                <div class="absolute top-2 left-2 flex items-center gap-2">
-                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    <span id="cctv-label" class="text-[9px] font-bold bg-black/60 px-2 py-0.5 rounded uppercase tracking-widest">LIVE • SEJONG-RO CH 01</span>
-                </div>
-                <!-- Radar Overlay Mockup -->
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div id="radar-ring" class="w-24 h-24 border-2 border-green-500/20 rounded-full flex items-center justify-center">
-                        <div id="radar-ring-inner" class="w-16 h-16 border border-green-500/40 rounded-full animate-ping"></div>
-                    </div>
-                    <!-- AI Detection Overlay -->
-                    <div id="ai-vision-box" class="absolute w-32 h-20 border border-red-500/50 rounded flex items-start justify-start p-1 bg-red-500/5 hidden">
-                        <span class="text-[7px] bg-red-500 text-white px-1">FLOOD ZONE ALPHA ⚠️</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 gap-3">
-                <div class="glass p-4 rounded-2xl">
-                    <p class="text-[9px] text-slate-500 uppercase font-black mb-1">현재 강수량</p>
-                    <div class="flex items-baseline gap-1">
-                        <span id="rain-val" class="text-xl font-extrabold text-blue-400">12.5</span>
-                        <span class="text-[9px] text-slate-600">mm/h</span>
-                    </div>
-                </div>
-                <div class="glass p-4 rounded-2xl">
-                    <p class="text-[9px] text-slate-500 uppercase font-black mb-1">예측 수위 (데이터)</p>
-                    <div class="flex items-baseline gap-1">
-                        <span id="level-val" class="text-xl font-extrabold text-green-400">0.05</span>
-                        <span class="text-[9px] text-slate-600">m</span>
-                    </div>
-                </div>
-                <div id="eta-flood-box" class="col-span-2 glass p-4 rounded-2xl border border-red-500/20 bg-red-500/5 hidden">
-                    <p class="text-[9px] text-red-500 uppercase font-bold mb-1 flex items-center justify-between">
-                        <span><i class="fas fa-clock mr-1 animate-pulse"></i> AI 예측 임계 수위 도달</span>
-                        <span class="text-[8px] text-red-500/50">4K 비전 파이프라인 분석</span>
-                    </p>
-                    <div class="flex items-baseline gap-1">
-                        <span id="flood-eta-val" class="text-2xl font-black text-white">14</span>
-                        <span class="text-xs text-slate-400">분 후 도달 예상</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AI Decision Box (Cognitive UI) -->
-            <div id="decision-box" class="glass p-5 rounded-3xl border-l-4 border-green-500">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="font-bold text-xs text-green-400 uppercase tracking-tight">AI 의사결정 지원</h3>
-                    <span id="ai-time" class="text-[9px] text-slate-500">SYNC: 방금 전</span>
-                </div>
-                <p id="ai-msg" class="text-[11px] text-slate-300 leading-relaxed font-semibold">
-                    분석 결과: 현재 강수 패턴 및 배수 펌프 가동 상태가 지극히 정상입니다. 침수 위험이 낮습니다. 상시 감지를 유지합니다.
-                </p>
-            </div>
-
-            <!-- System Health -->
-            <div class="flex justify-between text-[9px] px-2 text-slate-600">
-                <div class="flex items-center gap-1"><i class="fas fa-microchip"></i> 보드: 안정</div>
-                <div class="flex items-center gap-1"><i class="fas fa-link text-green-500"></i> 통신: 실시간</div>
-                <div class="flex items-center gap-1"><i class="fas fa-satellite"></i> GPS: 정상</div>
-            </div>
-        </div>
-
-        <!-- Dashboard Home (Confirmed Layout) -->
-        <div id="dashboard-home" class="flex-1 overflow-y-auto px-6 py-4 space-y-4 pb-24 no-scrollbar">
-            
-            <div class="sticky top-0 bg-[#05070a] z-10 pt-2 pb-4 space-y-3">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                    <input type="text" placeholder="지하차도 명칭 검색" class="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500">
-                </div>
-                
-                <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                    <div class="whitespace-nowrap px-4 py-1.5 rounded-full bg-blue-600 text-white text-[10px] font-bold cursor-pointer">전체 (138)</div>
-                    <div id="chip-critical" class="whitespace-nowrap px-4 py-1.5 rounded-full bg-red-500/10 text-red-500/50 border border-red-500/20 text-[10px] font-bold cursor-pointer">위험 (0)</div>
-                    <div id="chip-warning" class="whitespace-nowrap px-4 py-1.5 rounded-full bg-yellow-500/10 text-yellow-500/50 border border-yellow-500/20 text-[10px] font-bold cursor-pointer">주의 (0)</div>
-                </div>
-            </div>
-
-            <div id="urgent-group" class="hidden space-y-3 mb-6">
-                <div class="text-[9px] text-red-500 uppercase font-black tracking-widest px-2 flex items-center mb-2">
-                    <i class="fas fa-exclamation-triangle mr-1 animate-pulse"></i> 긴급 대응 현장
-                </div>
-            </div>
-
-            <div class="text-[9px] text-slate-600 uppercase font-black tracking-widest mb-2 px-2 mt-4 flex justify-between">
-                <span>일반 관할 지하차도</span>
-                <span>서울시설공단 <i class="fas fa-check-circle ml-1"></i></span>
-            </div>
-            
-            <div id="normal-group" class="space-y-3">
-                <div onclick="selectAlertSite('강남구 태헤란로 지하차도', '0.05', 'gangnam')" id="card-oj" class="site-card p-5 rounded-[2rem] flex justify-between items-center cursor-pointer border-l-4 border-green-500">
-                    <div>
-                        <h3 class="font-bold text-white text-sm">강남구 태헤란로 지하차도</h3>
-                        <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest">NORMAL (5cm)</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-slate-700"></i>
-                </div>
-
-                <div onclick="selectAlertSite('은평구 지하차도 A', '0.04', 'eunpyeong')" id="card-ss" class="site-card p-5 rounded-[2rem] flex justify-between items-center cursor-pointer border-l-4 border-green-500">
-                    <div>
-                        <h3 class="font-bold text-white text-sm">은평구 지하차도 A</h3>
-                        <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest">NORMAL (4cm)</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-slate-700"></i>
-                </div>
-
-                <div onclick="selectAlertSite('마포구 지하차도', '0.03', 'mapo')" id="card-wj" class="site-card p-5 rounded-[2rem] flex justify-between items-center cursor-pointer border-l-4 border-green-500">
-                    <div>
-                        <h3 class="font-bold text-white text-sm">마포구 지하차도</h3>
-                        <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest">NORMAL (3cm)</p>
-                    </div>
-                    <i class="fas fa-chevron-right text-slate-700"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Control Panel (Fail-safe 3-Tier Protocol) -->
-        <div id="control-panel" class="absolute bottom-0 left-0 right-0 p-6 pb-12 glass border-t border-white/10 rounded-t-[2.5rem] hidden z-40">
-            <div class="space-y-4">
-                <div class="text-center">
-                    <p class="text-[10px] text-red-500 font-black tracking-tighter uppercase mb-1">통합상황실 교신 프로토콜</p>
-                    <h4 id="dispatch-title" class="text-white font-bold text-sm">현장 출동 승인 요청</h4>
-                </div>
-                <div id="dispatch-btn" class="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 rounded-2xl p-4 text-center font-black text-white text-xs cursor-pointer transition-all" onclick="confirmDispatchAct()">
-                    <i class="fas fa-paper-plane mr-2"></i> [출동 수락] 상황실 통보 및 이동
-                </div>
-                <p id="dispatch-hint" class="text-[9px] text-slate-500 text-center">※ 수락 시 변리사 검토용 '도착 인증(QR)' 기능이 활성화됩니다.</p>
-            </div>
-        </div>
-
-        <!-- Bottom Navigation Bar (Phone Frame Standard) -->
-        <nav class="h-20 bg-[#0f172a] flex justify-around items-center px-8 border-t border-slate-800 relative z-30">
-            <i class="fas fa-th-large text-blue-500 cursor-pointer" onclick="showDashboard()"></i>
-            <i class="fas fa-clipboard-list text-slate-700 cursor-pointer"></i>
-            <!-- Floating QR Scan -->
-            <div onclick="openQRScanner()" class="absolute -top-7 w-14 h-14 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/40 cursor-pointer border-4 border-[#0f172a] transform transition-transform hover:scale-110">
-                <i class="fas fa-qrcode text-white text-xl"></i>
-            </div>
-            <i class="fas fa-bell text-slate-700 cursor-pointer ml-14"></i>
-            <i class="fas fa-user-circle text-slate-700 cursor-pointer"></i>
-        </nav>
-
-    </div>
-
-    <!-- QR Scanner Modal -->
-    <div id="qr-modal" class="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <div class="absolute top-12 right-12 text-white cursor-pointer p-4" onclick="closeQRScanner()">
-            <i class="fas fa-times text-3xl"></i>
-        </div>
-        
-        <div class="text-center mb-10 px-8">
-            <h2 class="text-2xl font-black text-white mb-3">현장 장비 QR 인증</h2>
-            <p class="text-[12px] text-slate-500">현장 제어 함체(Aegivis Unit)의 QR 코드를 인식하여<br>실제 도착 여부를 최종 검증합니다.</p>
-        </div>
-
-        <div class="relative w-72 h-72 border-2 border-white/10 rounded-[3rem] overflow-hidden mb-12 shadow-[0_0_50px_rgba(34,197,94,0.1)]">
-            <div class="scan-line"></div>
-            <img src="https://images.unsplash.com/photo-1558486012-817176f84c6d?q=80&w=400&auto=format&fit=crop" class="w-full h-full object-cover opacity-40 grayscale" alt="Scanner Background">
-            <!-- Markers -->
-            <div class="absolute top-8 left-8 w-10 h-10 border-t-4 border-l-4 border-green-500 rounded-tl-2xl"></div>
-            <div class="absolute top-8 right-8 w-10 h-10 border-t-4 border-r-4 border-green-500 rounded-tr-2xl"></div>
-            <div class="absolute bottom-8 left-8 w-10 h-10 border-b-4 border-l-4 border-green-500 rounded-bl-2xl"></div>
-            <div class="absolute bottom-8 right-8 w-10 h-10 border-b-4 border-r-4 border-green-500 rounded-br-2xl"></div>
-        </div>
-
-        <button onclick="simulateScanSuccess()" class="bg-white/5 hover:bg-white/10 text-white font-black py-4 px-12 rounded-full border border-white/10 transition-all text-sm uppercase tracking-widest">
-            Scan Simulation Success
-        </button>
-    </div>
-
-    <!-- Simulation Controls -->
-    <div class="fixed top-4 right-4 flex flex-col gap-2 scale-75 origin-top-right">
-        <button onclick="simulateCrisis()" class="bg-red-600 text-white font-bold py-2 px-6 rounded-full shadow-lg">경보 발생 테스트</button>
-        <button onclick="location.reload()" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full shadow-lg">초기화</button>
-    </div>
-
-    <!-- Logic Controller -->
-    <script>
-        const dashboard = document.getElementById('dashboard-home');
-        const detail = document.getElementById('detail-view');
-        const control = document.getElementById('control-panel');
-        const backBtn = document.getElementById('back-btn');
-        const mainStatus = document.getElementById('main-status');
-        const currentSiteLabel = document.getElementById('current-site-label');
-        const levelVal = document.getElementById('level-val');
-        const decisionBox = document.getElementById('decision-box');
-        const aiMsg = document.getElementById('ai-msg');
-        const qrModal = document.getElementById('qr-modal');
-        const gpsBar = document.getElementById('gps-status-bar');
-
-        let selectedSite = "";
-        let currentSiteId = "";
-
-        function selectAlertSite(siteName, level, siteId) {
-            selectedSite = siteName;
-            currentSiteId = siteId || 'gangnam';
-            dashboard.classList.add('hidden');
-            detail.classList.remove('hidden');
-            backBtn.classList.remove('hidden');
-            
-            currentSiteLabel.innerText = siteName + " 관제";
-            
-            // AI Analysis Logic
-            if (level >= 0.15) {
-                mainStatus.innerText = '위험 (CRITICAL)';
-                mainStatus.className = "status-badge px-3 py-1 rounded-full text-[10px] font-bold border bg-red-600 text-white border-red-500/40 pulse-critical";
-                levelVal.innerText = level;
-                levelVal.className = "text-xl font-extrabold text-red-500";
-                decisionBox.className = "glass p-5 rounded-3xl border-l-4 border-red-500 bg-red-500/5";
-                aiMsg.innerHTML = `<span class="text-red-400 font-bold">침수 확정 예측 (+14분).</span> AI가 현장 비전 파이프라인 분석을 통해 수위 임계치 도달을 확정했습니다. 즉각적인 요원 투입 및 현장 차단막 수동 확보를 권고합니다.`;
-                document.getElementById('eta-flood-box').classList.remove('hidden');
-                document.getElementById('ai-vision-box').classList.remove('hidden');
-                control.classList.remove('hidden');
-            } else {
-                mainStatus.innerText = '연결됨 (ACTIVE)';
-                mainStatus.className = "status-badge px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40 text-[10px] font-bold";
-                levelVal.innerText = level;
-                levelVal.className = "text-xl font-extrabold text-green-400";
-                decisionBox.className = "glass p-5 rounded-3xl border-l-4 border-green-500";
-                aiMsg.innerText = "현 주간 강수 패턴 분석 결과 특이사항이 발견되지 않았습니다. 상시 감리 상태를 유지합니다.";
-                document.getElementById('eta-flood-box').classList.add('hidden');
-                document.getElementById('ai-vision-box').classList.add('hidden');
-                control.classList.add('hidden');
-            }
+            document.querySelectorAll('#bottom-nav i').forEach(icon => {
+                icon.classList.remove('nav-active');
+                icon.classList.add('text-slate-600');
+            });
         }
 
         function showDashboard() {
-            detail.classList.add('hidden');
-            control.classList.add('hidden');
-            backBtn.classList.add('hidden');
-            dashboard.classList.remove('hidden');
-            currentSiteLabel.innerText = '서울시 통합 관제 모드';
+            hideAllViews();
+            dashboardView.classList.remove('hidden');
+            dashboardView.classList.add('view-transition');
+            headerTitle.innerText = "이지비스 3.0";
+            headerSub.innerText = "서울 통합 관제 센터";
+            document.getElementById('nav-dashboard').classList.add('nav-active');
+            
+            const badge = document.getElementById('connection-status');
+            badge.innerText = '정상 (NORMAL)';
+            badge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black';
         }
 
-        function confirmDispatchAct() {
-            const btn = document.getElementById('dispatch-btn');
-            const agentId = "YDH-" + Math.floor(Math.random()*9000 + 1000);
+        function showMonitoring() {
+            hideAllViews();
+            monitoringView.classList.remove('hidden');
+            monitoringView.classList.add('view-transition');
+            headerTitle.innerText = "실시간 모니터링";
+            headerSub.innerText = "현장 라이브 피드 및 이력";
+            document.getElementById('nav-monitoring').classList.add('nav-active');
+            backBtn.classList.remove('hidden');
+        }
+
+        function showNotifications() {
+            hideAllViews();
+            notificationsView.classList.remove('hidden');
+            notificationsView.classList.add('view-transition');
+            headerTitle.innerText = "알림 센터";
+            headerSub.innerText = "시스템 긴급 경보";
+            document.getElementById('nav-notifications').classList.add('nav-active');
+            backBtn.classList.remove('hidden');
+            // Check notification permission status when showing the view
+            if ('Notification' in window) {
+                updateNotificationUI(Notification.permission);
+            }
+        }
+
+        function showSettings() {
+            hideAllViews();
+            settingsView.classList.remove('hidden');
+            settingsView.classList.add('view-transition');
+            headerTitle.innerText = "사용자 설정";
+            headerSub.innerText = "관리자 및 앱 구성";
+            document.getElementById('nav-settings').classList.add('nav-active');
+            backBtn.classList.remove('hidden');
+        }
+
+        function openDetail(siteName, levelCm, location, siteId) {
+            hideAllViews();
+            currentSiteName = siteName;
+            currentSiteId = siteId || 'gangnam';
+            const level = parseInt(levelCm);
+            detailView.classList.remove('hidden');
+            detailView.classList.add('view-transition');
+            backBtn.classList.remove('hidden');
+
+            // Ensure we are at the top of the detail view
+            const scrollArea = document.getElementById('scroll-area');
+            if (scrollArea) scrollArea.scrollTop = 0;
+
+            headerSub.innerText = siteName + " (" + location + ")";
             
-            btn.innerHTML = `<i class="fas fa-satellite-dish mr-2 animate-pulse"></i> 통합상황실 교신 중...`;
-            btn.classList.replace('bg-blue-600', 'bg-slate-700');
+            // Status Logic (Badge)
+            const statusBadge = document.getElementById('connection-status');
+            const detailCard = document.getElementById('detail-header-card');
+            const detailStatus = document.getElementById('detail-status');
+            const aiBox = document.getElementById('detail-ai-box');
+            const aiText = document.getElementById('detail-ai-text');
+
+            if (level >= 15) {
+                statusBadge.innerText = '위기 (CRITICAL)';
+                statusBadge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-red-500 border border-red-500/30 bg-red-500/10 uppercase font-black';
+                detailCard.className = 'glass p-4 rounded-3xl border-l-[6px] border-red-500';
+                detailStatus.innerText = '즉시 대응';
+                detailStatus.className = 'text-[9px] font-black text-red-500 bg-red-500/10 px-2 py-1 rounded-full uppercase tracking-tighter';
+                aiBox.className = 'rounded-2xl border-2 border-red-500/40 p-4 bg-red-500/5 mt-2';
+                aiText.innerHTML = `도로면 수위 15cm 도달! <b class="text-red-400">즉시 진입 통제 및 요원 현장 투입</b>이 필요합니다. AI 예측상 수위 지속 상승 중.`;
+                actionBar.classList.remove('hidden');
+            } else if (level >= 10) {
+                statusBadge.innerText = '주의 (WARNING)';
+                statusBadge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-yellow-500 border border-yellow-500/30 bg-yellow-500/10 uppercase font-black';
+                detailCard.className = 'glass p-4 rounded-3xl border-l-[6px] border-yellow-500';
+                detailStatus.innerText = '주의 관찰';
+                detailStatus.className = 'text-[9px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-full uppercase tracking-tighter';
+                aiBox.className = 'rounded-2xl border-2 border-yellow-500/40 p-4 bg-yellow-500/5 mt-2';
+                aiText.innerHTML = `수위 ${levelCm}cm 상승 중 — AI 패턴 분석 결과 <b class="text-yellow-400">3분 내 임계치(15cm) 도달 확률 94.2%</b>. 지금 출동 권장.`;
+                actionBar.classList.remove('hidden');
+            } else {
+                statusBadge.innerText = '정상 (NORMAL)';
+                statusBadge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black';
+                detailCard.className = 'glass p-4 rounded-3xl border-l-[6px] border-green-500';
+                detailStatus.innerText = 'NORMAL';
+                detailStatus.className = 'text-[9px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded-full uppercase tracking-tighter';
+                aiBox.className = 'rounded-2xl border-2 border-green-500/40 p-4 bg-green-500/5 mt-2';
+                aiText.innerText = '현 시점 상황 정상을 유지합니다. AI 보정 결과 수위 상승 전조가 발견되지 않았습니다.';
+                actionBar.classList.add('hidden'); // Normal sites don't need dispatch
+            }
+
+            // Populate values
+            document.getElementById('detail-site-name').innerText = siteName;
+            document.getElementById('detail-site-id').innerText = 'ID: ' + (level >= 10 ? 'CN-' : 'GN-') + (Math.floor(Math.random() * 9000) + 1000) + ' / ' + (level >= 10 ? '침수 위험' : '정상 관측');
+            document.getElementById('detail-level').innerText = levelCm;
+            document.getElementById('detail-rainfall').innerText = (Math.random() * 5 + 8).toFixed(1);
+
+            // Update Relocated Multi-Sensor Data
+            document.getElementById('detail-sensor-radar').innerText = (levelCm / 100).toFixed(2);
+            document.getElementById('detail-sensor-kma').innerText = (Math.random() * 5 + 10).toFixed(1);
+            document.getElementById('detail-sensor-local').innerText = (Math.random() * 5 + 10).toFixed(1);
+            
+            const plc = document.getElementById('detail-sensor-plc');
+            const plcStatus = document.getElementById('detail-sensor-plc-status');
+            if (level >= 15) {
+                plc.innerText = 'ON (ACTIVE)';
+                plc.className = 'text-xs font-black text-red-500';
+                plcStatus.innerText = '경보 발령';
+                plcStatus.className = 'text-[8px] text-red-500 font-bold';
+            } else {
+                plc.innerText = 'OFF';
+                plc.className = 'text-xs font-black text-white';
+                plcStatus.innerText = '정상';
+                plcStatus.className = 'text-[8px] text-slate-500 font-bold';
+            }
+
+            // Set dispatch button action
+            const actionBtn = document.getElementById('main-action-btn');
+            actionBtn.innerHTML = `<i class="fas fa-paper-plane text-sm mr-2"></i>출동 수락 — 상황실 통보`;
+            actionBtn.onclick = () => acceptDispatch(siteName);
+            actionBtn.className = 'w-full btn-premium py-5 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3';
+            document.getElementById('action-hint').innerText = '출동 승인 시 상황실에 GPS 포함 출동 정보가 실시간 전송됩니다.';
+        }
+
+        // showDashboard function already replaced above
+
+        function filterSites(type) {
+            const urgentSection = document.getElementById('urgent-section');
+            const watchSection = document.getElementById('watch-section');
+            const scrollArea = document.getElementById('scroll-area');
+            
+            if (!urgentSection || !watchSection || !scrollArea) return;
+
+            // Show sections based on type
+            if (type === 'all') {
+                urgentSection.style.display = '';
+                watchSection.style.display = '';
+                scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (type === 'urgent') {
+                urgentSection.style.display = '';
+                watchSection.style.display = 'none';
+                scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (type === 'watch') {
+                urgentSection.style.display = 'none';
+                watchSection.style.display = '';
+                scrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function filterDistrict(btn, district) {
+            // Update active button styling
+            document.querySelectorAll('#district-filter button').forEach(b => {
+                b.className = 'bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10';
+            });
+            btn.className = 'bg-blue-600 text-white text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap';
+            // For prototype: just show all (real filtering would query backend)
+            document.getElementById('scroll-area').scrollTop = 0;
+        }
+
+
+        // Updated Action Logic with formal Notification
+        function acceptDispatch(siteName) {
+            const agentId = "YDH-" + Math.floor(Math.random()*9000 + 1000);
+            currentSiteName = siteName;
+            currentAgentId = agentId;
+            
+            // 1. Show Local Action Update
+            const btn = document.getElementById('main-action-btn');
+            btn.innerHTML = `<i class="fas fa-satellite-dish text-xs mr-2 animate-pulse"></i> <span>상황실 통보 중... (SENDING)</span>`;
+            btn.classList.replace('btn-premium', 'bg-slate-700');
+
+            // 2. Update HQ Log immediately
+            const hqLog = document.getElementById('hq-log');
+            const now = new Date().toLocaleTimeString('ko-KR');
+            if (hqLog) {
+                hqLog.innerHTML = `<p class="text-yellow-400 font-bold">&#9679; [${now}] ${agentId} — ${siteName} 출동 수락 (현장 이동 중)</p>`;
+            }
 
             // ── SERVER SYNC ──────────────────────────────────────────
             fetch(`${BASE_URL}/api/dispatch/update`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    siteId: currentSiteId,
+                    site_id: currentSiteId,
                     name: agentId,
                     status: '출동 수락 (현장 이동 중)',
                     phone: '010-8282-1024'
                 })
             }).catch(err => console.error("Sync failed:", err));
+            // ────────────────────────────────────────────────────────
 
+            // 3. Simulate HQ Acknowledgement after 1.5s
             setTimeout(() => {
-                alert(`🚔 [AEGIVIS 통합상황실 - 교신 성공]\n\n현장: ${selectedSite}\n승인요원: ${agentId}\n\n상황실에서 요원님의 실시간 GPS 동선을 확보하였습니다. 안전하게 이동하십시오.`);
-                btn.innerHTML = `<i class="fas fa-car-side mr-2 animate-bounce"></i> 현장 이동 중 (EN ROUTE)`;
+                alert(`🚔 [이지비스 통합상황실 - 출동 수락 확인]\n\n현장: ${siteName}\n승인요원: ${agentId}\n\n상황실에서 요원님의 실시간 GPS 동선을 확보하였습니다. 현장 도착 후 하단 QR 버튼으로 도착 인증을 해주세요.`);
+                
+                btn.innerHTML = `<i class="fas fa-car-side text-xs mr-2 animate-bounce"></i> <span>현장 이동 중 (EN ROUTE)</span>`;
                 btn.classList.replace('bg-slate-700', 'bg-emerald-600');
-                gpsBar.classList.remove('hidden');
-                document.getElementById('dispatch-hint').innerHTML = `<span class="text-emerald-400 font-bold">● 통보 완료</span> - 도착 후 하단 QR 버튼을 누르십시오.`;
-            }, 1000);
+                
+                // Add GPS Tracking Status Bar
+                const gpsBar = document.createElement('div');
+                gpsBar.id = 'gps-bar';
+                gpsBar.className = 'absolute top-[100px] left-0 w-full bg-emerald-600/90 text-white text-[9px] py-1 text-center font-bold z-50';
+                gpsBar.innerHTML = `<i class="fas fa-map-marker-alt mr-2"></i> GPS 트래킹 활성 (${agentId}) | 현장 도착 후 하단 QR 인증 필수`;
+                document.querySelector('.phone-frame').appendChild(gpsBar);
+
+                // ✅ UNLOCK QR button after dispatch accepted
+                dispatchAccepted = true;
+                unlockQRButton();
+
+                // Hide bulky action bar once accepted to reveal navigation and the new QR button
+                actionBar.classList.add('hidden');
+                
+                document.getElementById('action-hint').innerHTML = `<span class="text-emerald-400 font-bold">● 상황실 통보 완료</span> — 현장 도착 시 하단 초록 QR 버튼으로 도착 인증을 해주세요.`;
+            }, 1500);
+        }
+
+        function handleQRClick() {
+            if (!dispatchAccepted) {
+                alert('⚠️ 출동 수락 후에 QR 인증이 가능합니다.\n\n현장 카드를 눌러 출동을 먼저 수락해주세요.');
+                return;
+            }
+            openScanner();
+        }
+
+        // --- PWA Push Notification Logic ---
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                alert('이 브라우저는 알림 기능을 지원하지 않습니다.');
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                updateNotificationUI(permission);
+                if (permission === 'granted') {
+                    new Notification('이지비스 3.0', {
+                        body: '이제 긴급 알림을 실시간으로 수신할 수 있습니다.',
+                        icon: './icons/icon-192.png'
+                    });
+                }
+            });
+        }
+
+        function updateNotificationUI(permission) {
+            const btn = document.getElementById('notif-btn');
+            const status = document.getElementById('notif-status');
+            if (permission === 'granted') {
+                btn.innerText = '승인됨';
+                btn.className = 'bg-emerald-600 text-white text-[10px] px-3 py-1.5 rounded-full font-bold cursor-default';
+                btn.onclick = null;
+                status.innerText = '알림 서비스가 활성화되어 있습니다.';
+                status.classList.replace('text-slate-500', 'text-emerald-400');
+            } else if (permission === 'denied') {
+                btn.innerText = '차단됨';
+                btn.className = 'bg-red-600 text-white text-[10px] px-3 py-1.5 rounded-full font-bold';
+                status.innerText = '브라우저 설정에서 알림 권한을 허용해 주세요.';
+                status.classList.replace('text-slate-500', 'text-red-400');
+            }
+        }
+
+        function triggerDispatchNudge() {
+            if (Notification.permission === 'granted') {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification('🚨 [긴급 호출] 미수락 출동 건 확인 요망', {
+                            body: '이지비스 상황실: 세종로 현장 출동이 지연되고 있습니다. 즉시 앱에서 [출동 수락] 버튼을 눌러주세요!',
+                            icon: './icons/icon-192.png',
+                            badge: './icons/icon-192.png',
+                            tag: 'dispatch-nudge',
+                            renotify: true,
+                            vibrate: [1000, 200, 1000, 200, 1000],
+                            data: { url: window.location.href }
+                        });
+                    });
+                }
+            } else {
+                alert('먼저 알림 권한을 승인해 주세요!');
+            }
+        }
+
+        function triggerTestNotification() {
+            if (Notification.permission === 'granted') {
+                if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        registration.showNotification('🚨 [긴급] 수위 초과 알림 (테스트)', {
+                            body: '세종로 지하차도 수위가 15cm를 초과했습니다. 즉시 출동 바랍니다!',
+                            icon: './icons/icon-192.png',
+                            badge: './icons/icon-192.png',
+                            vibrate: [500, 110, 500, 110, 450, 110],
+                            data: { url: window.location.href }
+                        });
+                    });
+                } else {
+                    new Notification('🚨 [긴급] 테스트 알림', {
+                        body: '서비스 워커가 아직 활성화되지 않았습니다. 일반 알림으로 발송합니다.',
+                        icon: './icons/icon-192.png'
+                    });
+                }
+            } else {
+                alert('먼저 알림 권한을 승인해 주세요!');
+            }
+        }
+
+        function forcePurgeCache() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    });
+                    alert('시스템 캐시가 초기화되었습니다. 확인을 누르면 최신 버전으로 재접속합니다.');
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
+            }
+        }
+        if ('Notification' in window) {
+            // Initial check when the script loads
+            // The actual UI update will happen when showNotifications() is called
+            // or if the user interacts with the permission button.
+        }
+
+        function unlockQRButton() {
+            const qrBtn = document.getElementById('qr-btn');
+            qrBtn.className = 'absolute -top-6 w-14 h-14 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-600/30 border-4 border-[#0f172a] transform transition-all cursor-pointer animate-pulse';
+            qrBtn.innerHTML = '<i class="fas fa-qrcode text-white text-xl"></i>';
+        }
+
+        function openScanner() {
+            hideAllViews();
+            scannerView.classList.remove('hidden');
+            backBtn.classList.remove('hidden');
+            headerTitle.innerText = "현장 장비 인증";
+            headerSub.innerText = "고유 QR 코드 인식 단계";
+        }
+
+        function simulateArrival() {
+            const now = new Date().toLocaleTimeString('ko-KR');
+            document.getElementById('success-site').innerText = currentSiteName;
+            document.getElementById('success-time').innerText = now;
+            document.getElementById('success-agent').innerText = currentAgentId;
+
+            // ── SERVER SYNC ──────────────────────────────────────────
+            fetch(`${BASE_URL}/api/dispatch/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    site_id: currentSiteId,
+                    name: currentAgentId,
+                    status: '현장 도착 (인증 완료)',
+                    phone: '010-8282-1024'
+                })
+            }).catch(err => console.error("Sync failed:", err));
+            // ────────────────────────────────────────────────────────
+
+            successOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                successOverlay.classList.add('opacity-100');
+            }, 50);
+        }
+
+        function returnToDashboardAfterArrival() {
+            // Update HQ log with arrival confirmation
+            const hqLog = document.getElementById('hq-log');
+            const now = new Date().toLocaleTimeString('ko-KR');
+            if (hqLog) {
+                hqLog.innerHTML = `
+                    <p class="text-yellow-400 font-bold">· [${parseInt(now)-2}] ${currentAgentId} — ${currentSiteName} 출동 (<span class="text-yellow-300">이동중</span>)</p>
+                    <p class="text-emerald-400 font-black">● [${now}] ${currentAgentId} — ${currentSiteName} <span class="text-emerald-300">현장 도착 확인 ✓</span></p>
+                `;
+            }
+            // Remove GPS bar
+            const gpsBar = document.getElementById('gps-bar');
+            if (gpsBar) gpsBar.remove();
+
+            successOverlay.classList.add('hidden');
+            successOverlay.classList.remove('opacity-100');
+            showDashboard();
+        }
+
+        // --- NEW EVIDENCE & REPORTING LOGIC ---
+        let currentReportStep = 'none'; // none, arrived, photo_before, operation_done, photo_after
+        let cameraType = 'before';
+
+        function startReportingStep() {
+            console.log("Starting reporting step...");
+            successOverlay.classList.remove('opacity-100');
+            setTimeout(() => {
+                successOverlay.classList.add('hidden');
+                
+                // Show detail view and evidence section
+                hideAllViews();
+                detailView.classList.remove('hidden');
+                const evidenceSec = document.getElementById('evidence-section');
+                evidenceSec.classList.remove('hidden');
+                
+                currentReportStep = 'arrived';
+                updateActionBtnForReporting();
+                
+                // Log to HQ
+                const hqLog = document.getElementById('hq-log');
+                if (hqLog) {
+                    hqLog.innerHTML = `<p class="text-emerald-400 font-bold">● [${currentSiteName}] 요원 현장 도착 및 인증 완료 (증거수합 시작)</p>` + hqLog.innerHTML;
+                }
+
+                // 모바일 호환성 (Old iOS 등) 을 고려한 강력한 스크롤 구현
+                setTimeout(() => {
+                    if (evidenceSec) {
+                        try {
+                            evidenceSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } catch (e) {
+                            // Fallback
+                            const scrollArea = document.getElementById('scroll-area');
+                            if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+                        }
+                    }
+                    
+                    // Fallback to absolute scroll just in case
+                    setTimeout(() => {
+                        const scrollArea = document.getElementById('scroll-area');
+                        if (scrollArea && scrollArea.scrollTop < 100) {
+                            scrollArea.scrollTop = scrollArea.scrollHeight + 1000;
+                        }
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function updateActionBtnForReporting() {
+            const actionBtn = document.getElementById('main-action-btn');
+            const actionHint = document.getElementById('action-hint');
+            actionBar.classList.remove('hidden');
+
+            if (currentReportStep === 'arrived') {
+                actionBtn.innerHTML = `<i class="fas fa-camera text-sm mr-2"></i>조작 전 현장 사진 촬영`;
+                actionBtn.onclick = () => triggerCamera('before');
+                actionBtn.className = 'w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3';
+                actionHint.innerText = '법적 책임 증명을 위해 조작 전 현장 전경 사진이 필요합니다.';
+            } else if (currentReportStep === 'photo_before') {
+                actionBtn.innerHTML = `<i class="fas fa-hand-pointer text-sm mr-2"></i>차단막 조작 완료 확인`;
+                actionBtn.onclick = () => completeOperation();
+                actionBtn.className = 'w-full bg-gradient-to-r from-red-600 to-red-800 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3';
+                actionHint.innerText = '실제 조작반의 물리 버튼을 눌러 차단막을 내린 후 버튼을 눌러주세요.';
+            } else if (currentReportStep === 'operation_done') {
+                actionBtn.innerHTML = `<i class="fas fa-camera text-sm mr-2"></i>조작 후 결과 사진 촬영`;
+                actionBtn.onclick = () => triggerCamera('after');
+                actionBtn.className = 'w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3';
+                actionHint.innerText = '차단막 하강이 완료된 현장 사진을 촬영해 주세요.';
+            } else if (currentReportStep === 'photo_after') {
+                actionBtn.innerHTML = `<i class="fas fa-file-export text-sm mr-2"></i>최종 조치 보고서 제출`;
+                actionBtn.onclick = () => submitFinalReport();
+                actionBtn.className = 'w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20';
+                actionHint.innerText = '모든 데이터와 사진이 상황실에 최종 전송됩니다.';
+            }
+        }
+
+        function triggerCamera(type) {
+            cameraType = type;
+            const overlay = document.getElementById('camera-overlay');
+            const hint = document.getElementById('camera-hint');
+            overlay.classList.remove('hidden');
+            hint.innerText = type === 'before' ? '차단기 조작 전 전체 현장 촬영' : '차단기 조작 후 결과 사진 촬영';
+        }
+
+        function closeCamera() {
+            document.getElementById('camera-overlay').classList.add('hidden');
+        }
+
+        function capturePhoto() {
+            const overlay = document.getElementById('camera-overlay');
+            const shutter = overlay.querySelector('.rounded-full.border-4');
+            
+            // Shutter animation
+            shutter.classList.add('scale-75', 'opacity-50');
+            overlay.classList.add('bg-white');
+            
+            setTimeout(() => {
+                overlay.classList.remove('bg-white');
+                shutter.classList.remove('scale-75', 'opacity-50');
+                overlay.classList.add('hidden');
+                
+                // Show photo in slot
+                const imgId = cameraType === 'before' ? 'img-before' : 'img-after';
+                const checkId = cameraType === 'before' ? 'check-before' : 'check-after';
+                const slotId = cameraType === 'before' ? 'photo-before-slot' : 'photo-after-slot';
+                
+                const img = document.getElementById(imgId);
+                const placeholder = img.nextElementSibling; // The icon placeholder
+                
+                // Randomized field photos (simulated)
+                img.src = cameraType === 'before' ? 
+                    "https://images.unsplash.com/photo-1542128962-9d50ad7bf714?q=80&w=400" : 
+                    "https://images.unsplash.com/photo-1582234033100-2e06c9a81fb6?q=80&w=400";
+                
+                img.onload = () => {
+                    img.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                    document.getElementById(checkId).classList.remove('hidden');
+                    document.getElementById(slotId).classList.add('ring-2', 'ring-emerald-500');
+                };
+
+                // Update step
+                if (cameraType === 'before') {
+                    currentReportStep = 'photo_before';
+                    document.getElementById('photo-after-slot').classList.remove('opacity-40', 'pointer-events-none');
+                } else {
+                    currentReportStep = 'photo_after';
+                }
+                
+                updateActionBtnForReporting();
+                
+                // Update log
+                const log = document.getElementById('report-log');
+                const time = new Date().toLocaleTimeString();
+                log.innerHTML += `<p class="text-blue-400 font-bold">✓ [${time}] ${cameraType === 'before' ? '조작전' : '조작후'} 사진 수집 완료</p>`;
+            }, 300);
+        }
+
+        function completeOperation() {
+            currentReportStep = 'operation_done';
+            updateActionBtnForReporting();
+            const log = document.getElementById('report-log');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `<p class="text-red-400">[${time}] 물리 조작 확인완료 (차단막 하강)</p>`;
+        }
+
+        function submitFinalReport() {
+            document.getElementById('report-overlay').classList.remove('hidden');
         }
 
         async function testServerConnection() {
             try {
                 const start = Date.now();
-                const r = await fetch(`${BASE_URL}/api/dispatch/status`, { method: 'GET' });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
+                
+                const r = await fetch(`${BASE_URL}/api/dispatch/status`, { 
+                    method: 'GET',
+                    signal: controller.signal 
+                });
+                clearTimeout(timeoutId);
+                
                 if (r.ok) {
                     const end = Date.now();
-                    alert(`✅ [서버 연결 성공]\n\n대상: ${BASE_URL}\n응답 속도: ${end - start}ms\n\nPC 서버와 정상적으로 통신 중입니다.`);
+                    alert(`✅ [서버 연결 성공]\n\n대상: ${BASE_URL}\n응답 시간: ${end - start}ms\n\n현재 대표님 PC의 서버와 정상적으로 통신 중입니다. 출동 수락 시 관제 화면에 즉시 반영됩니다.`);
+                } else {
+                    alert(`⚠️ [서버 응답 오류]\n\n서버가 응답하지만 상태 코드 ${r.status}를 반환했습니다. PC 서버가 실행 중인지 확인해 주세요.`);
                 }
             } catch (e) {
-                alert(`❌ [연결 실패]\n\n대상: ${BASE_URL}\n\n서버를 찾을 수 없습니다. 같은 와이파이인지 확인해 주세요.`);
+                alert(`❌ [연결 실패]\n\n대상: ${BASE_URL}\n\n사유: 서버를 찾을 수 없거나 네트워크 접근이 거부되었습니다.\n\n확인 사항:\n1. PC와 핸드폰이 같은 와이파이(Wi-Fi)에 있나요?\n2. PC 서버가 [0.0.0.0] 주소로 실행 중인가요?`);
+                console.error("Connection test failed:", e);
             }
         }
 
-        function simulateCrisis() {
-            const chipCritical = document.getElementById('chip-critical');
-            const cardOj = document.getElementById('card-oj');
-            
-            cardOj.classList.replace('border-green-500', 'border-red-500');
-            cardOj.classList.add('bg-red-500/10', 'animate-pulse');
-            cardOj.querySelector('p').innerText = 'CRITICAL ALERT (15cm)';
-            cardOj.querySelector('p').className = 'text-[10px] text-red-500 font-black uppercase tracking-widest';
-            cardOj.onclick = () => selectAlertSite('강남구 태헤란로 지하차도', '0.15', 'gangnam');
-            
-            const urgentGroup = document.getElementById('urgent-group');
-            urgentGroup.appendChild(cardOj);
-            urgentGroup.classList.remove('hidden');
-            
-            chipCritical.innerText = "위험 (1)";
-            chipCritical.classList.remove('text-red-500/50', 'border-red-500/20');
-            chipCritical.classList.add('bg-red-500', 'text-white', 'border-red-500');
-
-            alert('⚠️ [긴급 경보] 강남구 현장에서 임계 수위 전조 증상이 감지되었습니다. 통합 대시보드를 확인하십시오.');
-        }
-
-        function openQRScanner() {
-            qrModal.classList.remove('hidden');
-            setTimeout(() => qrModal.classList.add('opacity-100'), 50);
-        }
-
-        function closeQRScanner() {
-            qrModal.classList.remove('opacity-100');
-            setTimeout(() => qrModal.classList.add('hidden'), 300);
-        }
-
-        function simulateScanSuccess() {
-            closeQRScanner();
-            
-            // ── SERVER SYNC (Arrival) ────────────────────────────────
-            fetch(`${BASE_URL}/api/dispatch/update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    siteId: currentSiteId,
-                    name: "YDH-AGENT",
-                    status: '현장 도착 (조치 중)',
-                    phone: '010-8282-1024'
-                })
-            }).catch(err => console.error("Arrival sync failed:", err));
-
-            alert(`✅ [최종 도착 인증 성공]\n\n현장: ${selectedSite}\n\n도착 시간이 상황실로 자동 전송되었습니다.\n지금부터 현장 조작반의 모든 수동 제어 권한이 활성화됩니다.\n(Aegivis 3-Tier Fail-safe Security Locked)`);
-            mainStatus.innerText = '근무지 배치됨 (DEPLOYED)';
-            mainStatus.className = "status-badge px-3 py-1 rounded-full text-[10px] font-bold border bg-emerald-600 text-white border-green-500/40";
-        }
-
-        // PWA 자동 업데이트 알림
+        // PWA 자동 업데이트 알림 (SW 최신화 감지)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 const confirmUpdate = confirm("🚀 시스템이 최신 버전(v3.0.5)으로 업데이트되었습니다!\n\n지금 즉시 적용하시겠습니까?");
-                if (confirmUpdate) window.location.reload();
+                if (confirmUpdate) {
+                    window.location.reload();
+                }
             });
         }
+
+        function returnToDashboardAfterReport() {
+            document.getElementById('report-overlay').classList.add('hidden');
+            showDashboard();
+            
+            // Reset for next time
+            currentReportStep = 'none';
+            document.getElementById('evidence-section').classList.add('hidden');
+            const imgBefore = document.getElementById('img-before');
+            if (imgBefore) imgBefore.classList.add('hidden');
+            const imgAfter = document.getElementById('img-after');
+            if (imgAfter) imgAfter.classList.add('hidden');
+            const checkBefore = document.getElementById('check-before');
+            if (checkBefore) checkBefore.classList.add('hidden');
+            const checkAfter = document.getElementById('check-after');
+            if (checkAfter) checkAfter.classList.add('hidden');
+
+            const hqLog = document.getElementById('hq-log');
+            if (hqLog) {
+                hqLog.innerHTML = `<p class="text-blue-400 font-bold">● [${currentSiteName}] 조치 완료 보고서 수신됨</p>` + hqLog.innerHTML;
+            }
+        }
+
     </script>
 </body>
 </html>
