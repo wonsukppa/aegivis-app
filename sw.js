@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aegivis-v5-cache'; // 버전을 v5로 올려서 캐시 강제 갱신
+const CACHE_NAME = 'aegivis-v6-cache'; // 버전을 v6로 올려서 캐시 강제 갱신
 const urlsToCache = [
   './index.html',
   './manifest.json',

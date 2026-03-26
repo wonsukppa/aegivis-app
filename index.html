@@ -1383,6 +1383,40 @@
             document.getElementById('report-overlay').classList.remove('hidden');
         }
 
+        async function testServerConnection() {
+            try {
+                const start = Date.now();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); // 3초 타임아웃
+                
+                const r = await fetch(`${BASE_URL}/api/dispatch/status`, { 
+                    method: 'GET',
+                    signal: controller.signal 
+                });
+                clearTimeout(timeoutId);
+                
+                if (r.ok) {
+                    const end = Date.now();
+                    alert(`✅ [서버 연결 성공]\n\n대상: ${BASE_URL}\n응답 시간: ${end - start}ms\n\n현재 대표님 PC의 서버와 정상적으로 통신 중입니다. 출동 수락 시 관제 화면에 즉시 반영됩니다.`);
+                } else {
+                    alert(`⚠️ [서버 응답 오류]\n\n서버가 응답하지만 상태 코드 ${r.status}를 반환했습니다. PC 서버가 실행 중인지 확인해 주세요.`);
+                }
+            } catch (e) {
+                alert(`❌ [연결 실패]\n\n대상: ${BASE_URL}\n\n사유: 서버를 찾을 수 없거나 네트워크 접근이 거부되었습니다.\n\n확인 사항:\n1. PC와 핸드폰이 같은 와이파이(Wi-Fi)에 있나요?\n2. PC 서버가 [0.0.0.0] 주소로 실행 중인가요?`);
+                console.error("Connection test failed:", e);
+            }
+        }
+
+        // PWA 자동 업데이트 알림 (SW 최신화 감지)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                const confirmUpdate = confirm("🚀 시스템이 최신 버전(v3.0.5)으로 업데이트되었습니다!\n\n지금 즉시 적용하시겠습니까?");
+                if (confirmUpdate) {
+                    window.location.reload();
+                }
+            });
+        }
+
         function returnToDashboardAfterReport() {
             document.getElementById('report-overlay').classList.add('hidden');
             showDashboard();
