@@ -195,15 +195,15 @@
                 <div class="grid grid-cols-3 gap-3">
                     <div class="glass p-3 rounded-2xl text-center cursor-pointer active:scale-95 transition-transform" onclick="filterSites('all')">
                         <p class="text-[8px] text-slate-500 font-bold mb-1">전체 현장</p>
-                        <p class="text-lg font-black text-white">138</p>
+                        <p class="text-lg font-black text-white">--</p>
                     </div>
                     <div class="glass p-3 rounded-2xl text-center border border-red-500/30 cursor-pointer active:scale-95 transition-transform" onclick="filterSites('urgent')">
                         <p class="text-[8px] text-red-500 font-bold mb-1">긴급 출동</p>
-                        <p class="text-lg font-black text-red-500">02</p>
+                        <p class="text-lg font-black text-red-500">--</p>
                     </div>
                     <div class="glass p-3 rounded-2xl text-center border border-yellow-500/30 cursor-pointer active:scale-95 transition-transform" onclick="filterSites('watch')">
                         <p class="text-[8px] text-yellow-500 font-bold mb-1">주의 관찰</p>
-                        <p class="text-lg font-black text-yellow-500">04</p>
+                        <p class="text-lg font-black text-yellow-500">--</p>
                     </div>
                 </div>
 
@@ -242,84 +242,7 @@
                     <h2 class="text-[10px] text-red-500 font-black uppercase tracking-widest mb-3 flex items-center">
                         <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-2 animate-pulse"></span> 긴급 대응 요망 (CRITICAL)
                     </h2>
-                    
-                    <div class="space-y-3">
-                        <!-- Critical Card 1 -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-red-500 relative" onclick="openDetail('세종로 지하차도', '12', 'Seoul Central', 'sejong')">
-                            <!-- ... existing content ... -->
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">세종로 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: CN-1024 / 지하 1층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded tracking-tighter">즉시 대응</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-red-500">12<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">전조증상</p>
-                                    <p class="text-lg font-black text-white">역류<span class="text-[8px] ml-0.5 font-normal">감지</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-1">골든타임</p>
-                                    <p class="text-lg font-black text-white">12<span class="text-[10px] ml-0.5">min</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Critical Card 2 (NEW) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-red-500 relative" onclick="openDetail('강남구 태헤란로 지하차도', '14', 'Gangnam-gu', 'gangnam')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">강남구 태헤란로 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: GN-UD-01 / 지하 1층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded tracking-tighter">즉시 대응</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-red-500">14<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">전조증상</p>
-                                    <p class="text-lg font-black text-white">침수<span class="text-[8px] ml-0.5 font-normal">위험</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-1">골든타임</p>
-                                    <p class="text-lg font-black text-white">08<span class="text-[10px] ml-0.5">min</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Critical Card 3 (NEW - Seocho) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-amber-500 relative" onclick="openDetail('서초구 지하차도', '11', 'Seocho-gu', 'seocho')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">서초구 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: SC-UD-07 / 지하 1층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-amber-500">11<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">전조증상</p>
-                                    <p class="text-lg font-black text-white">상승<span class="text-[8px] ml-0.5 font-normal">중</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-1">골든타임</p>
-                                    <p class="text-lg font-black text-white">15<span class="text-[10px] ml-0.5">min</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-[10px] text-slate-500 text-center py-8 glass rounded-2xl">상황실 서버 데이터 로드 중...</p>
                 </div>
 
                 <!-- Watch Tasks -->
@@ -327,106 +250,7 @@
                     <h2 class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-3 flex items-center">
                         <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-2"></span> 주의 관찰 (WATCH)
                     </h2>
-                    <div class="space-y-3">
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('은평구 지하차도 A', '10', 'Eunpyeong-gu', 'eunpyeong')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">은평구 지하차도 A</h3>
-                                    <p class="text-[10px] text-slate-500">ID: IS-UD-03 / 지하 1층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-yellow-500">10<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
-                                    <p class="text-lg font-black text-white">45<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
-                                </div>
-                                <div class="text-center bg-white/5 rounded-xl px-4 py-2 border border-white/5">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
-                                    <p class="text-lg font-black text-white">68<span class="text-[10px] ml-0.5">%</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Watch Card 2 (NEW) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('신림 지하차도', '08', 'Gwanak-gu')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">신림 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: GK-5012 / 지하 1층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
-                            </div>
-                            <div class="flex justify-between text-center">
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-yellow-500">08<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3 mx-1">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
-                                    <p class="text-lg font-black text-white">32<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
-                                </div>
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
-                                    <p class="text-lg font-black text-white">42<span class="text-[10px] ml-0.5">%</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Watch Card 3 (NEW) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('성산 지하차도', '07', 'Mapo-gu')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">성산 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: MP-4082 / 지하 1층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
-                            </div>
-                            <div class="flex justify-between text-center">
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-yellow-500">07<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3 mx-1">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
-                                    <p class="text-lg font-black text-white">28<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
-                                </div>
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
-                                    <p class="text-lg font-black text-white">35<span class="text-[10px] ml-0.5">%</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Watch Card 4 (NEW) -->
-                        <div class="site-card p-5 rounded-3xl border-l-[6px] border-yellow-500" onclick="openDetail('대림 지하차도', '09', 'Yeongdeungpo')">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="text-white font-bold text-base">대림 지하차도</h3>
-                                    <p class="text-[10px] text-slate-500">ID: YP-6021 / 지하 2층</p>
-                                </div>
-                                <span class="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded tracking-tighter">주의 관찰</span>
-                            </div>
-                            <div class="flex justify-between text-center">
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">도로면수위</p>
-                                    <p class="text-lg font-black text-yellow-500">09<span class="text-[10px] ml-0.5">cm</span></p>
-                                </div>
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3 mx-1">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">강우량</p>
-                                    <p class="text-lg font-black text-white">38<span class="text-[8px] ml-0.5 font-normal">mm/h</span></p>
-                                </div>
-                                <div class="bg-white/5 rounded-xl px-4 py-2 border border-white/5 basis-1/3">
-                                    <p class="text-[8px] text-slate-500 mb-0.5">위험확률</p>
-                                    <p class="text-lg font-black text-white">55<span class="text-[10px] ml-0.5">%</span></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-[10px] text-slate-500 text-center py-8 glass rounded-2xl">상황실 서버 데이터 로드 중...</p>
                 </div>
 
                 <!-- HQ Status Board -->
@@ -1083,6 +907,10 @@
             if (savedUser && savedToken) {
                 const user = JSON.parse(savedUser);
                 completeLogin(user);
+            } else {
+                // 로그인되지 않은 경우에도 즉시 상황실 데이터 폴링 및 SSE 연결
+                connectSSE();
+                startPollingSites();
             }
         });
     </script>
@@ -1761,6 +1589,19 @@
         // ── 실시간 연동 및 바인딩 엔진 (추가) ──
         let sitesPollingInterval = null;
         let sseEventSource = null;
+        let lastFetchedSites = {};
+        let currentSelectedDistrict = 'all';
+
+        const DISTRICT_MAP = {
+            'bongcheon': '관악',
+            'sejong': '종로',
+            'gangnam': '강남',
+            'seocho': '서초',
+            'eunpyeong': '은평',
+            'sinlim': '관악',
+            'sungsan': '마포',
+            'daerim': '영등포'
+        };
 
         function startPollingSites() {
             if (sitesPollingInterval) clearInterval(sitesPollingInterval);
@@ -1774,6 +1615,9 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const sites = await res.json();
                 
+                lastFetchedSites = sites; // 캐시 데이터 저장
+                
+                renderDistrictFilter(sites); // 실시간 구 목록 탭 동적 갱신
                 renderSites(sites);
                 
                 const logTextEl = document.getElementById('dashboard-log-text');
@@ -1788,6 +1632,45 @@
                     logTextEl.innerText = `데이터 연결 실패 (재시도 중...)`;
                 }
             }
+        }
+
+        function renderDistrictFilter(sites) {
+            const filterContainer = document.getElementById('district-filter');
+            if (!filterContainer) return;
+            
+            const districts = new Set();
+            Object.keys(sites).forEach(key => {
+                const site = sites[key];
+                const districtName = DISTRICT_MAP[key] || site.title.substring(0, 2);
+                districts.add(districtName);
+            });
+            
+            // 탭 개수가 맞지 않거나 갱신이 필요할 때만 리렌더링
+            const currentDistCount = filterContainer.querySelectorAll('button').length;
+            if (currentDistCount === (districts.size + 1)) return; 
+            
+            let html = `<button onclick="filterDistrict(this, 'all')" class="${currentSelectedDistrict === 'all' ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400'} text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">전체</button>`;
+            
+            districts.forEach(dist => {
+                const isActive = currentSelectedDistrict === dist;
+                html += `<button onclick="filterDistrict(this, '${dist}')" class="${isActive ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400'} text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10">${dist}구</button>`;
+            });
+            
+            filterContainer.innerHTML = html;
+        }
+
+        function filterDistrict(btn, district) {
+            currentSelectedDistrict = district;
+            
+            document.querySelectorAll('#district-filter button').forEach(b => {
+                b.className = 'bg-white/5 text-slate-400 text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10';
+            });
+            btn.className = 'bg-blue-600 text-white text-[10px] px-4 py-2 rounded-full font-bold whitespace-nowrap border border-white/10';
+            
+            if (lastFetchedSites && Object.keys(lastFetchedSites).length > 0) {
+                renderSites(lastFetchedSites);
+            }
+            document.getElementById('scroll-area').scrollTop = 0;
         }
 
         function renderSites(sites) {
@@ -1815,6 +1698,13 @@
             
             Object.keys(sites).forEach(key => {
                 const site = sites[key];
+                const districtName = DISTRICT_MAP[key] || site.title.substring(0, 2);
+                
+                // 구(District) 필터 적용
+                if (currentSelectedDistrict !== 'all' && currentSelectedDistrict !== districtName) {
+                    return;
+                }
+                
                 totalCount++;
                 const level = site.level; // SAFE, CAUTION, ALERT, CRITICAL
                 const waterLevel = site.waterLevel;
@@ -1875,9 +1765,6 @@
                 if (isUrgent) {
                     urgentHtml += cardHtml;
                     urgentCount++;
-                } else if (isWatch) {
-                    watchHtml += cardHtml;
-                    watchCount++;
                 } else {
                     watchHtml += cardHtml;
                     watchCount++;
