@@ -152,9 +152,12 @@
                         <label for="remember-me" class="text-[10px] text-slate-500 font-bold">로그인 규격 가이드를 읽었습니다.</label>
                     </div>
                 </div>
-                <div class="pt-4 border-t border-white/5 flex justify-center">
+                <div class="pt-4 border-t border-white/5 flex justify-center gap-4">
                     <button onclick="promptServerUrl()" class="text-[10px] text-slate-500 hover:text-blue-400 font-bold flex items-center gap-1.5 transition-colors">
-                        <i class="fas fa-cog"></i> 상황실 서버 주소 설정
+                        <i class="fas fa-cog"></i> 서버 주소 설정
+                    </button>
+                    <button onclick="forcePurgeCache()" class="text-[10px] text-slate-500 hover:text-red-400 font-bold flex items-center gap-1.5 transition-colors">
+                        <i class="fas fa-sync-alt"></i> 캐시 강제 초기화
                     </button>
                 </div>
             </div>
