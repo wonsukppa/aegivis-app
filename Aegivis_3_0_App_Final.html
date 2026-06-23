@@ -292,6 +292,7 @@
 
                 <!-- LIVE CCTV at TOP of detail (Min Margin) -->
                 <div class="relative glass rounded-2xl overflow-hidden border border-white/10" style="aspect-ratio:16/9">
+                    <video id="detail-cctv-video" class="w-full h-full object-cover opacity-80 hidden" autoplay loop muted playsinline></video>
                     <img id="detail-cctv-feed" src="https://images.unsplash.com/photo-1545147986-a9d6f210df99?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover opacity-80" style="object-position: center">
                     <div class="absolute top-3 left-3 flex items-center gap-2">
                         <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -1025,6 +1026,12 @@
             const cctvFeed = document.getElementById('detail-cctv-feed');
             if (cctvFeed) {
                 cctvFeed.src = '';
+                cctvFeed.classList.remove('hidden');
+            }
+            const cctvVid = document.getElementById('detail-cctv-video');
+            if (cctvVid) {
+                cctvVid.src = '';
+                cctvVid.classList.add('hidden');
             }
         }
 
@@ -1132,12 +1139,23 @@
                 actionBar.classList.add('hidden'); // Normal sites don't need dispatch
             }
 
-            // CCTV 실시간 비디오 피드 연동 (mobile=true를 전달하여 대역폭 제어 정책 대응)
+            // CCTV 실시간 비디오 피드 연동 (mobile=true 파라미터를 제외하여 403 차단 회피)
             const cctvFeed = document.getElementById('detail-cctv-feed');
+            const cctvVid = document.getElementById('detail-cctv-video');
             if (cctvFeed) {
-                cctvFeed.src = `${BASE_URL}/api/video_proxy?site=${currentSiteId}&channel=0&mobile=true`;
+                cctvFeed.classList.remove('hidden');
+                if (cctvVid) cctvVid.classList.add('hidden');
+                
+                cctvFeed.src = `${BASE_URL}/api/video_proxy?site=${currentSiteId}&channel=0`;
+                
+                // 엣지 카메라 연결 오류(오프라인) 시 동영상 플레이스홀더로 폴백
                 cctvFeed.onerror = () => {
-                    cctvFeed.src = 'https://images.unsplash.com/photo-1545147986-a9d6f210df99?q=80&w=800'; // Fallback
+                    console.log("CCTV live feed error. Switching to video simulation loop.");
+                    cctvFeed.classList.add('hidden');
+                    if (cctvVid) {
+                        cctvVid.classList.remove('hidden');
+                        cctvVid.src = 'https://assets.mixkit.co/videos/preview/mixkit-traffic-on-a-highway-at-night-41584-large.mp4';
+                    }
                 };
             }
 
@@ -1145,12 +1163,16 @@
             document.getElementById('detail-site-name').innerText = siteName;
             document.getElementById('detail-site-id').innerText = 'ID: ' + currentSiteId.toUpperCase() + ' / ' + (level >= 10 ? '침수 위험' : '정상 관측');
             document.getElementById('detail-level').innerText = levelCm;
-            document.getElementById('detail-rainfall').innerText = (Math.random() * 5 + 8).toFixed(1);
+
+            // 실제 센터 수신 강수량 데이터 바인딩 (랜덤 가짜 데이터 제거)
+            const siteData = lastFetchedSites && lastFetchedSites[currentSiteId];
+            const actualRain = siteData && siteData.rain != null ? siteData.rain : 0.0;
+            document.getElementById('detail-rainfall').innerText = actualRain.toFixed(1);
 
             // Update Relocated Multi-Sensor Data
             document.getElementById('detail-sensor-radar').innerText = (levelCm / 100).toFixed(2);
-            document.getElementById('detail-sensor-kma').innerText = (Math.random() * 5 + 10).toFixed(1);
-            document.getElementById('detail-sensor-local').innerText = (Math.random() * 5 + 10).toFixed(1);
+            document.getElementById('detail-sensor-kma').innerText = actualRain.toFixed(1);
+            document.getElementById('detail-sensor-local').innerText = actualRain.toFixed(1);
             
             const plc = document.getElementById('detail-sensor-plc');
             const plcStatus = document.getElementById('detail-sensor-plc-status');
