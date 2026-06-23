@@ -184,7 +184,10 @@
                     <h1 id="header-main-title" class="text-base font-black text-white tracking-tight uppercase">이지비스 3.0 <span class="text-[8px] font-bold text-slate-500 ml-1 px-1.5 py-0.5 bg-white/5 rounded border border-white/10 uppercase align-middle">v3.0.5</span></h1>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="testServerConnection()" class="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-500 hover:text-blue-400">
+                    <button onclick="promptServerUrl()" class="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-500 hover:text-blue-400" title="서버 주소 설정">
+                        <i class="fas fa-cog text-[9px]"></i>
+                    </button>
+                    <button onclick="testServerConnection()" class="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center border border-white/10 text-slate-500 hover:text-blue-400" title="연결 테스트">
                         <i class="fas fa-plug text-[9px]"></i>
                     </button>
                     <div id="connection-status" class="status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black">
@@ -1688,11 +1691,53 @@
                     const now = new Date();
                     logTextEl.innerText = `데이터 서버 수신 완료: ${now.toLocaleTimeString()}`;
                 }
+
+                // 연결 상태 배지 초록색(ONLINE) 업데이트
+                const badge = document.getElementById('connection-status');
+                if (badge) {
+                    badge.innerText = '연결됨 (ONLINE)';
+                    badge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black';
+                }
             } catch (e) {
                 console.error("Failed to fetch sites:", e);
                 const logTextEl = document.getElementById('dashboard-log-text');
                 if (logTextEl) {
                     logTextEl.innerText = `데이터 연결 실패 (재시도 중...)`;
+                }
+
+                // 연결 상태 배지 빨간색(OFFLINE) 업데이트
+                const badge = document.getElementById('connection-status');
+                if (badge) {
+                    badge.innerText = '오프라인 (OFFLINE)';
+                    badge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-red-500 border border-red-500/30 bg-red-500/10 uppercase font-black';
+                }
+
+                // 대시보드 데이터 로드 미완료 시 에러 안내와 설정 숏컷 제공
+                if (!lastFetchedSites || Object.keys(lastFetchedSites).length === 0) {
+                    const urgentSection = document.getElementById('urgent-section');
+                    const watchSection = document.getElementById('watch-section');
+                    if (urgentSection) {
+                        urgentSection.innerHTML = `
+                            <h2 class="text-[10px] text-red-500 font-black uppercase tracking-widest mb-3 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-2"></span> 상황실 서버 연결 끊김
+                            </h2>
+                            <div class="glass p-5 rounded-3xl text-center space-y-3">
+                                <p class="text-[10px] text-slate-400">설정된 서버 주소: <span class="font-mono text-blue-300 underline select-all break-all">${BASE_URL}</span></p>
+                                <p class="text-[9px] text-slate-500 leading-normal">상황실 서버가 실행 중이지 않거나 주소가 맞지 않습니다.<br>아래 버튼 혹은 우상단의 ⚙️ 아이콘을 눌러 올바른 주소로 갱신하십시오.</p>
+                                <button onclick="promptServerUrl()" class="mx-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl text-[10px] flex items-center gap-1.5 transition-all active:scale-95 shadow-md shadow-blue-500/20">
+                                    <i class="fas fa-cog"></i> 상황실 서버 주소 설정
+                                </button>
+                            </div>
+                        `;
+                    }
+                    if (watchSection) {
+                        watchSection.innerHTML = `
+                            <h2 class="text-[10px] text-yellow-500 font-black uppercase tracking-widest mb-3 flex items-center">
+                                <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-2"></span> 주의 관찰 (WATCH)
+                            </h2>
+                            <p class="text-[10px] text-slate-500 text-center py-4 glass rounded-2xl">서버 통신 대기 중...</p>
+                        `;
+                    }
                 }
             }
         }
