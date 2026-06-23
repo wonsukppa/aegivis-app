@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aegivis-v8-cache'; // 버전을 v8로 올려서 최종 통합 디자인 강제 갱신
+const CACHE_NAME = 'aegivis-v9-cache'; // 캐시 강제 무효화 및 신규 서버설정 반영을 위해 버전 업
 const urlsToCache = [
   './index.html',
   './Aegivis_3_0_App_Final.html',
