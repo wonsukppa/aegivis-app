@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aegivis-v9-cache'; // 캐시 강제 무효화 및 신규 서버설정 반영을 위해 버전 업
+const CACHE_NAME = 'aegivis-v10-cache'; // 실시간 CCTV 비디오 동적 연동 반영을 위해 버전 업
 const urlsToCache = [
   './index.html',
   './Aegivis_3_0_App_Final.html',
