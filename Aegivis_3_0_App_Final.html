@@ -818,6 +818,17 @@
                 return;
             }
             
+            // --- 오프라인/로컬 테스트용 예외 처리 (admin / 1234) ---
+            if (id === 'admin' && pw === '1234') {
+                const localUser = { id: 'admin', name: '관리자(오프라인)', role: 'admin' };
+                localStorage.setItem('aegivis_token', 'offline-token-1234');
+                localStorage.setItem('aegivis_user', JSON.stringify(localUser));
+                alert('🔓 로컬(오프라인) 모드로 접속합니다.\n상황실 서버 연동을 위해 설정(⚙️)에서 서버 주소를 확인해 주세요.');
+                completeLogin(localUser);
+                return;
+            }
+            // ----------------------------------------------------
+            
             try {
                 const res = await fetch(`${BASE_URL}/api/mobile/login`, {
                     method: 'POST',
