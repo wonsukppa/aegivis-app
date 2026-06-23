@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script>
         // Aegivis Demo Server Base URL (Dynamic via localStorage)
-        let BASE_URL = localStorage.getItem('aegivis_server_url') || 'https://regional-thy-command-enter.trycloudflare.com';
+        let BASE_URL = localStorage.getItem('aegivis_server_url') || 'https://seemed-slideshow-detected-education.trycloudflare.com';
     </script>
     <link rel="manifest" href="manifest.json?v=3">
     <link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
@@ -133,6 +133,7 @@
                 <h1 class="text-2xl font-black text-white tracking-tight orbitron">AEGIVIS <span class="text-blue-500">3.0</span></h1>
                 <p class="text-[10px] text-slate-500 font-bold tracking-[0.3em] uppercase">Field Dispatch System</p>
             </div>
+            <p id="m-login-server-status" class="text-[9px] text-blue-400 font-bold break-all bg-white/5 rounded-xl p-3 border border-white/5"></p>
 
             <div class="space-y-4 pt-4">
                 <div class="text-left space-y-1">
@@ -772,6 +773,13 @@
         let currentAgentId = "";
         let currentSiteId = "";
         let dispatchAccepted = false;
+        // 서버 상태 라벨 업데이트 함수
+        function updateLoginServerStatusLabel() {
+            const statusLabel = document.getElementById('m-login-server-status');
+            if (statusLabel) {
+                statusLabel.innerHTML = `<i class="fas fa-satellite-dish mr-1 text-[8px] animate-pulse"></i>현재 상황실 접속 주소:<br><span class="underline font-mono text-[8px] text-blue-300 select-all">${BASE_URL}</span>`;
+            }
+        }
 
         // --- PWA Service Worker Registration ---
         if ('serviceWorker' in navigator) {
@@ -804,6 +812,9 @@
                 // 적용 후 주소 설정창의 인풋 필드 값도 동기화
                 const settingInput = document.getElementById('setting-server-url');
                 if (settingInput) settingInput.value = BASE_URL;
+                
+                // 라벨 갱신
+                updateLoginServerStatusLabel();
                 
                 // 설정 적용 후 SSE 및 폴링 재연결
                 connectSSE();
@@ -943,6 +954,9 @@
             alert(`✅ 서버 접속 주소가 저장되었습니다.\n적용 대상: ${BASE_URL}`);
             testServerConnection();
             
+            // 라벨 갱신
+            updateLoginServerStatusLabel();
+            
             // 저장 후 SSE 및 폴링 재연결
             connectSSE();
             startPollingSites();
@@ -950,6 +964,7 @@
 
         // Check if already logged in (Restore session)
         window.addEventListener('load', () => {
+            updateLoginServerStatusLabel();
             const savedUser = localStorage.getItem('aegivis_user');
             const savedToken = localStorage.getItem('aegivis_token');
             if (savedUser && savedToken) {
