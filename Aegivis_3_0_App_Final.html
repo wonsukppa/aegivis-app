@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script>
         // Aegivis Demo Server Base URL (Dynamic via localStorage)
-        let BASE_URL = localStorage.getItem('aegivis_server_url') || 'https://prev-chicago-mediterranean-warrant.trycloudflare.com';
+        let BASE_URL = localStorage.getItem('aegivis_server_url') || 
+            (window.location.hostname.includes('github.io') 
+                ? 'https://aging-hardwood-apr-cuts.trycloudflare.com' 
+                : window.location.origin);
         if (BASE_URL.endsWith('/')) {
             BASE_URL = BASE_URL.slice(0, -1);
         }
