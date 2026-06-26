@@ -10,6 +10,9 @@
     <script>
         // Aegivis Demo Server Base URL (Dynamic via localStorage)
         let BASE_URL = localStorage.getItem('aegivis_server_url') || 'https://prev-chicago-mediterranean-warrant.trycloudflare.com';
+        if (BASE_URL.endsWith('/')) {
+            BASE_URL = BASE_URL.slice(0, -1);
+        }
     </script>
     <link rel="manifest" href="manifest.json?v=3">
     <link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
@@ -809,8 +812,12 @@
                     alert('⚠️ 올바른 URL 형식(예: https://example.trycloudflare.com 또는 http://localhost:5100)으로 입력해 주세요.');
                     return;
                 }
-                localStorage.setItem('aegivis_server_url', trimmed);
-                BASE_URL = trimmed;
+                let targetUrl = trimmed;
+                if (targetUrl.endsWith('/')) {
+                    targetUrl = targetUrl.slice(0, -1);
+                }
+                localStorage.setItem('aegivis_server_url', targetUrl);
+                BASE_URL = targetUrl;
                 alert(`✅ 서버 주소가 설정되었습니다.\n적용 대상: ${BASE_URL}`);
                 
                 // 적용 후 주소 설정창의 인풋 필드 값도 동기화
@@ -953,8 +960,12 @@
                 alert('⚠️ 올바른 URL 형식(예: http://192.168.0.10:5100)으로 입력해 주세요.');
                 return;
             }
-            localStorage.setItem('aegivis_server_url', urlInput);
-            BASE_URL = urlInput;
+            let targetUrl = urlInput;
+            if (targetUrl.endsWith('/')) {
+                targetUrl = targetUrl.slice(0, -1);
+            }
+            localStorage.setItem('aegivis_server_url', targetUrl);
+            BASE_URL = targetUrl;
             alert(`✅ 서버 접속 주소가 저장되었습니다.\n적용 대상: ${BASE_URL}`);
             testServerConnection();
             
