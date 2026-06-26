@@ -1176,8 +1176,7 @@
             document.getElementById('detail-level').innerText = levelCm;
 
             // 실제 센터 수신 강수량 데이터 바인딩 (랜덤 가짜 데이터 제거)
-            const siteData = lastFetchedSites && lastFetchedSites[currentSiteId];
-            const actualRain = siteData && siteData.rain != null ? siteData.rain : 0.0;
+            const actualRain = siteData && siteData.rainMM != null ? siteData.rainMM : (siteData && siteData.rain != null ? siteData.rain : 0.0);
             document.getElementById('detail-rainfall').innerText = actualRain.toFixed(1);
 
             // Update Relocated Multi-Sensor Data
