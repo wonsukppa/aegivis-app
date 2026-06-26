@@ -11,7 +11,7 @@
         // Aegivis Demo Server Base URL (Dynamic via localStorage)
         let BASE_URL = localStorage.getItem('aegivis_server_url') || 
             (window.location.hostname.includes('github.io') 
-                ? 'https://aging-hardwood-apr-cuts.trycloudflare.com' 
+                ? 'https://mobile.aegivis.co.kr' 
                 : window.location.origin);
         if (BASE_URL.endsWith('/')) {
             BASE_URL = BASE_URL.slice(0, -1);
