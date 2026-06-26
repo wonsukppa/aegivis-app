@@ -9,7 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Pretendard:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script>
         // Aegivis Demo Server Base URL (Dynamic via localStorage)
-        let BASE_URL = localStorage.getItem('aegivis_server_url') || 
+        let savedUrl = localStorage.getItem('aegivis_server_url');
+        if (savedUrl && savedUrl.includes('github.io')) {
+            localStorage.removeItem('aegivis_server_url');
+            savedUrl = null;
+        }
+        let BASE_URL = savedUrl || 
             (window.location.hostname.includes('github.io') 
                 ? 'https://mobile.aegivis.co.kr' 
                 : window.location.origin);
