@@ -333,7 +333,7 @@
                             <p class="text-[9px] text-slate-400 mb-2">예측 수위 (레이더)</p>
                             <div class="flex items-baseline gap-1">
                                 <p id="detail-level" class="text-2xl font-black text-green-400">0.05</p>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase">m</span>
+                                <span class="text-[9px] text-slate-500 font-bold uppercase">cm</span>
                             </div>
                         </div>
                     </div>
@@ -779,6 +779,7 @@
         let currentSiteName = "";
         let currentAgentId = "";
         let currentSiteId = "";
+        let currentSiteLocation = "";
         let dispatchAccepted = false;
         // 서버 상태 라벨 업데이트 함수
         function updateLoginServerStatusLabel() {
@@ -1103,7 +1104,7 @@
             hideAllViews();
             currentSiteName = siteName;
             currentSiteId = siteId || 'gangnam';
-            const level = parseInt(levelCm);
+            currentSiteLocation = location || '';
             detailView.classList.remove('hidden');
             detailView.classList.add('view-transition');
             backBtn.classList.remove('hidden');
@@ -1112,7 +1113,50 @@
             const scrollArea = document.getElementById('scroll-area');
             if (scrollArea) scrollArea.scrollTop = 0;
 
-            headerSub.innerText = siteName + " (" + location + ")";
+            // CCTV 실시간 비디오 피드 연동 (mobile=true 파라미터를 제외하여 403 차단 회피)
+            const cctvFeed = document.getElementById('detail-cctv-feed');
+            const cctvVid = document.getElementById('detail-cctv-video');
+            if (cctvFeed) {
+                cctvFeed.classList.remove('hidden');
+                if (cctvVid) cctvVid.classList.add('hidden');
+                
+                cctvFeed.src = `${BASE_URL}/api/video_proxy?site=${currentSiteId}&channel=0`;
+                
+                // 엣지 카메라 연결 오류(오프라인) 시 동영상 플레이스홀더로 폴백
+                cctvFeed.onerror = () => {
+                    console.log("CCTV live feed error. Switching to video simulation loop.");
+                    cctvFeed.classList.add('hidden');
+                    if (cctvVid) {
+                        cctvVid.classList.remove('hidden');
+                        cctvVid.src = 'https://assets.mixkit.co/videos/preview/mixkit-traffic-on-a-highway-at-night-41584-large.mp4';
+                    }
+                };
+            }
+
+            // Set dispatch button action
+            const actionBtn = document.getElementById('main-action-btn');
+            actionBtn.innerHTML = `<i class="fas fa-paper-plane text-sm mr-2"></i>출동 수락 — 상황실 통보`;
+            actionBtn.onclick = () => acceptDispatch(siteName);
+            actionBtn.className = 'w-full btn-premium py-5 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3';
+            document.getElementById('action-hint').innerText = '출동 승인 시 상황실에 GPS 포함 출동 정보가 실시간 전송됩니다.';
+            
+            // 실시간 재난 보고서 로드 연동
+            loadDisasterReport(currentSiteId);
+
+            // UI 업데이트 실행
+            updateDetailUI();
+        }
+
+        function updateDetailUI() {
+            if (!currentSiteId) return;
+
+            const siteData = lastFetchedSites && lastFetchedSites[currentSiteId];
+            if (!siteData) return;
+
+            const levelCm = Number(siteData.waterLevel || 0).toFixed(1);
+            const level = parseInt(levelCm);
+
+            headerSub.innerText = currentSiteName + " (" + currentSiteLocation + ")";
             
             // Status Logic (Badge)
             const statusBadge = document.getElementById('connection-status');
@@ -1159,38 +1203,17 @@
                 actionBar.classList.add('hidden'); // Normal sites don't need dispatch
             }
 
-            // CCTV 실시간 비디오 피드 연동 (mobile=true 파라미터를 제외하여 403 차단 회피)
-            const cctvFeed = document.getElementById('detail-cctv-feed');
-            const cctvVid = document.getElementById('detail-cctv-video');
-            if (cctvFeed) {
-                cctvFeed.classList.remove('hidden');
-                if (cctvVid) cctvVid.classList.add('hidden');
-                
-                cctvFeed.src = `${BASE_URL}/api/video_proxy?site=${currentSiteId}&channel=0`;
-                
-                // 엣지 카메라 연결 오류(오프라인) 시 동영상 플레이스홀더로 폴백
-                cctvFeed.onerror = () => {
-                    console.log("CCTV live feed error. Switching to video simulation loop.");
-                    cctvFeed.classList.add('hidden');
-                    if (cctvVid) {
-                        cctvVid.classList.remove('hidden');
-                        cctvVid.src = 'https://assets.mixkit.co/videos/preview/mixkit-traffic-on-a-highway-at-night-41584-large.mp4';
-                    }
-                };
-            }
-
             // Populate values
-            const siteData = lastFetchedSites && lastFetchedSites[currentSiteId];
-            const realId = siteData && siteData.id ? siteData.id : currentSiteId.toUpperCase();
-            document.getElementById('detail-site-name').innerText = siteName;
+            const realId = siteData.id ? siteData.id : currentSiteId.toUpperCase();
+            document.getElementById('detail-site-name').innerText = currentSiteName;
             document.getElementById('detail-site-id').innerText = 'ID: ' + realId + ' / ' + (level >= 5 ? '침수 위험' : '정상 관측');
             document.getElementById('detail-level').innerText = levelCm;
 
-            // 실제 센터 수신 강수량 데이터 바인딩 (랜덤 가짜 데이터 제거)
-            const actualRain = siteData && siteData.rainMM != null ? siteData.rainMM : (siteData && siteData.rain != null ? siteData.rain : 0.0);
+            // 실제 센터 수신 강수량 데이터 바인딩
+            const actualRain = siteData.rainMM != null ? siteData.rainMM : (siteData.rain != null ? siteData.rain : 0.0);
             document.getElementById('detail-rainfall').innerText = actualRain.toFixed(1);
 
-            // Update Relocated Multi-Sensor Data
+            // Update Relocated Multi-Sensor Data (Radar is divided by 100 to show in m, but top box shows levelCm directly in cm)
             document.getElementById('detail-sensor-radar').innerText = (levelCm / 100).toFixed(2);
             document.getElementById('detail-sensor-kma').innerText = actualRain.toFixed(1);
             document.getElementById('detail-sensor-local').innerText = actualRain.toFixed(1);
@@ -1208,16 +1231,6 @@
                 plcStatus.innerText = '정상';
                 plcStatus.className = 'text-[8px] text-slate-500 font-bold';
             }
-
-            // Set dispatch button action
-            const actionBtn = document.getElementById('main-action-btn');
-            actionBtn.innerHTML = `<i class="fas fa-paper-plane text-sm mr-2"></i>출동 수락 — 상황실 통보`;
-            actionBtn.onclick = () => acceptDispatch(siteName);
-            actionBtn.className = 'w-full btn-premium py-5 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3';
-            document.getElementById('action-hint').innerText = '출동 승인 시 상황실에 GPS 포함 출동 정보가 실시간 전송됩니다.';
-            
-            // 실시간 재난 보고서 로드 연동
-            loadDisasterReport(currentSiteId);
         }
 
         // showDashboard function already replaced above
@@ -1753,8 +1766,13 @@
                 // 연결 상태 배지 초록색(ONLINE) 업데이트
                 const badge = document.getElementById('connection-status');
                 if (badge) {
-                    badge.innerText = '연결됨 (ONLINE)';
-                    badge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black';
+                    if (!detailView.classList.contains('hidden')) {
+                        // 상세 페이지인 경우 상세 페이지 정보와 관련 상태 실시간 업데이트 호출
+                        updateDetailUI();
+                    } else {
+                        badge.innerText = '연결됨 (ONLINE)';
+                        badge.className = 'status-badge text-[8px] px-2 py-0.5 rounded text-green-400 border border-green-500/30 bg-green-500/10 uppercase font-black';
+                    }
                 }
             } catch (e) {
                 console.error("Failed to fetch sites:", e);
