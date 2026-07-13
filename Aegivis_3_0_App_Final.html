@@ -1136,7 +1136,12 @@
                     cctvFeed.classList.add('hidden');
                     if (cctvVid) {
                         cctvVid.classList.remove('hidden');
+                        cctvVid.muted = true;         // 모바일 Autoplay Policy: muted 필수
+                        cctvVid.playsInline = true;  // iOS Safari 인라인 재생 필수
+                        cctvVid.loop = true;
                         cctvVid.src = 'https://assets.mixkit.co/videos/preview/mixkit-traffic-on-a-highway-at-night-41584-large.mp4';
+                        cctvVid.load();
+                        cctvVid.play().catch(err => console.log("[CCTV] Video autoplay blocked:", err));
                     }
                 };
             }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aegivis-v14-cache'; // 강수량 및 모의 동영상 CCTV 적용을 위해 캐시 버전 업
+const CACHE_NAME = 'aegivis-v15-cache'; // CCTV 모바일 autoplay(muted+playsInline+load+play) 수정
 const urlsToCache = [
   './index.html',
   './Aegivis_3_0_App_Final.html',
